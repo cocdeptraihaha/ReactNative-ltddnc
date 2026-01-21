@@ -7,6 +7,7 @@ export default function Homepage() {
   return (
     <SafeAreaView
     style={{
+        backgroundColor: '#fff',  
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
@@ -19,6 +20,8 @@ export default function Homepage() {
         fontWeight: "bold",
       }}
       >Đây là Homepage</Text>
+      <Text>Họ tên: Nguyễn Thanh Tính</Text>
+      <Text>MSSV: 22110247</Text>
       <Button
         title="Về trang giới thiệu"
         onPress={() => router.push("/")}

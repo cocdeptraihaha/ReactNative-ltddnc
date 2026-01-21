@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Button, Text } from "react-native";
+import { Button, Image, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 
@@ -20,26 +20,21 @@ export default function Index() {
   return (
     <SafeAreaView
       style={{
+        backgroundColor: '#fff',
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
       }}
     >
-      <Text
-      style={{
-        color: "black",
-        fontSize: 20,
-        fontWeight: "bold",
-      }}
-      >Giới thiệu bản thân</Text>
-      <Text>Họ tên: Nguyễn Thanh Tính</Text>
-      <Text>MSSV: 22110247</Text>
+      <Image
+        source={require('../assets/images/logotruong.png')}
+        style={{ width: 100, height: 100 }}
+      />
       <Text>Tự động chuyển sang trang Homepage sau {count} giây</Text>
       <Button
         title="Tới Homepage"
         onPress={() => router.push("/homepage")}
       />
-
     </SafeAreaView>
   );
 }
