@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Pressable, View, type LayoutChangeEvent } from "react-native";
 import { Menu, TextInput, useTheme } from "react-native-paper";
-import styled from "styled-components/native";
 import { AppTextInput } from "./AppTextInput";
 
 export type SelectOption = { label: string; value: string };
@@ -43,7 +42,7 @@ export function AppSelect({
           onPress={() => setOpen(true)}
           accessibilityRole="button"
         >
-          <Anchor
+          <View
             onLayout={(e: LayoutChangeEvent) => {
               const w = Math.round(e.nativeEvent.layout.width);
               if (w > 0 && w !== anchorWidth) setAnchorWidth(w);
@@ -61,7 +60,7 @@ export function AppSelect({
                 />
               }
             />
-          </Anchor>
+          </View>
         </Pressable>
       }
     >
@@ -78,8 +77,3 @@ export function AppSelect({
     </Menu>
   );
 }
-
-const Anchor = styled(View)`
-  width: 100%;
-`;
-

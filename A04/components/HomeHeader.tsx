@@ -1,6 +1,5 @@
 import { View } from "react-native";
 import { Appbar, Divider, Menu, Text, useTheme } from "react-native-paper";
-import styled from "styled-components/native";
 
 export type HomeHeaderProps = {
   title?: string;
@@ -36,9 +35,9 @@ export function HomeHeader({
         anchor={<Appbar.Action icon="account-circle" onPress={onMenuOpen} />}
         anchorPosition="top"
       >
-        <MenuUser>
+        <View style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
           <Text variant="labelLarge">{userDisplayName ?? "Account"}</Text>
-        </MenuUser>
+        </View>
         <Divider />
         {onProfile && (
           <Menu.Item onPress={onProfile} title="Profile" leadingIcon="account" />
@@ -50,8 +49,4 @@ export function HomeHeader({
 }
 
 const titleStyle = { fontWeight: "700" as const, fontSize: 20 };
-
-const MenuUser = styled(View)`
-  padding: 12px 16px;
-`;
 

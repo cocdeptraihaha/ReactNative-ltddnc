@@ -1,6 +1,5 @@
 import { Button, type ButtonProps, useTheme } from "react-native-paper";
 import type { StyleProp, ViewStyle } from "react-native";
-import styled from "styled-components/native";
 
 export type AppButtonProps = ButtonProps & {
   style?: StyleProp<ViewStyle>;
@@ -29,9 +28,7 @@ export function AppButton({
     (mode === "contained" ? "#FFFFFF" : theme.colors.primary);
 
   const resolvedStyle: StyleProp<ViewStyle> =
-    mode === "outlined"
-      ? [{ borderColor: theme.colors.outline }, style]
-      : style;
+    mode === "outlined" ? [{ borderColor: theme.colors.outline }, style] : style;
 
   const spacingStyle: ViewStyle =
     mt !== undefined || mb !== undefined
@@ -39,24 +36,13 @@ export function AppButton({
       : {};
 
   return (
-    <StyledButton
+    <Button
       mode={mode}
       style={[spacingStyle, resolvedStyle]}
       contentStyle={[{ paddingVertical: 8 }, contentStyle]}
       buttonColor={resolvedButtonColor}
       textColor={resolvedTextColor}
-      $mode={mode}
-      $outline={theme.colors.outline}
       {...props}
     />
   );
 }
-
-const StyledButton = styled(Button)<{
-  $mode: NonNullable<ButtonProps["mode"]>;
-  $outline: string;
-}>`
-  border-color: ${(p: { $mode: NonNullable<ButtonProps["mode"]>; $outline: string }) =>
-    p.$mode === "outlined" ? p.$outline : "transparent"};
-`;
-
