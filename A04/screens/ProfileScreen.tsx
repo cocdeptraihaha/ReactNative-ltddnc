@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView } from "react-native";
+import { Alert, Pressable, ScrollView, View } from "react-native";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { ActivityIndicator, Surface, Text, useTheme } from "react-native-paper";
@@ -19,15 +19,6 @@ import { getProvinces, getWards, type ProvinceItem, type WardItem } from "../lib
 import { resizeToSquare500 } from "../utils/image";
 import { md5OfLocalFile, md5OfRemoteFile } from "../utils/hash";
 import { parseYmdToDate, toYmd } from "../utils/date";
-import {
-  ActionsRow,
-  AvatarInfo,
-  AvatarRow,
-  AvatarWrap,
-  CardWrap,
-  Field,
-} from "./styled/ProfileScreen.styled";
-
 type ProfileNav = NativeStackNavigationProp<RootStackParamList, "Profile">;
 
 export function ProfileScreen() {
@@ -225,12 +216,37 @@ export function ProfileScreen() {
         onToggleEdit={onToggleEdit}
       />
 
-      <ScrollView style={{ flex: 1 }}>
-        <CardWrap>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingVertical: 16,
+          alignItems: "center",
+        }}
+      >
+        <View style={{ width: "100%", maxWidth: 720 }}>
           <FormCard>
-            <AvatarRow>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 16,
+              }}
+            >
               <Pressable onPress={isEditing ? onPickAvatar : undefined}>
-                <AvatarWrap $bg={theme.colors.surface} $border={theme.colors.outline}>
+                <View
+                  style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: 40,
+                    overflow: "hidden",
+                    backgroundColor: theme.colors.surface,
+                    borderWidth: 1,
+                    borderColor: theme.colors.outline,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
                   {displayAvatarUri ? (
                     <Image
                       source={{ uri: displayAvatarUri }}
@@ -242,19 +258,32 @@ export function ProfileScreen() {
                       {initials}
                     </Text>
                   )}
-                </AvatarWrap>
+                </View>
               </Pressable>
 
-              <AvatarInfo>
-                <Text variant="titleMedium" style={{ color: theme.colors.onSurface, fontWeight: "700" }}>
+              <View style={{ flex: 1, marginLeft: 16 }}>
+                <Text
+                  variant="titleMedium"
+                  style={{ color: theme.colors.onSurface, fontWeight: "700" }}
+                >
                   {user.full_name || user.username || user.email}
                 </Text>
-                <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
+                <Text
+                  variant="bodyMedium"
+                  style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
+                >
                   {user.email}
                 </Text>
 
                 {isEditing && (
-                  <ActionsRow>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "flex-end",
+                      marginTop: 8,
+                    }}
+                  >
                     <AppButton
                       mode="outlined"
                       onPress={onPickAvatar}
@@ -263,21 +292,21 @@ export function ProfileScreen() {
                     >
                       Change photo
                     </AppButton>
-                  </ActionsRow>
+                  </View>
                 )}
-              </AvatarInfo>
-            </AvatarRow>
+              </View>
+            </View>
 
-            <Field>
+            <View style={{ marginBottom: 16 }}>
               <AppTextInput
                 label="Full name"
                 value={fullName}
                 onChangeText={setFullName}
                 editable={isEditing && !saving}
               />
-            </Field>
+            </View>
 
-            <Field>
+            <View style={{ marginBottom: 16 }}>
               <AppTextInput
                 label="Username"
                 value={username}
@@ -285,9 +314,9 @@ export function ProfileScreen() {
                 autoCapitalize="none"
                 editable={isEditing && !saving}
               />
-            </Field>
+            </View>
 
-            <Field>
+            <View style={{ marginBottom: 16 }}>
               <AppTextInput
                 label="Email"
                 value={email}
@@ -296,9 +325,9 @@ export function ProfileScreen() {
                 autoCapitalize="none"
                 editable={isEditing && !saving}
               />
-            </Field>
+            </View>
 
-            <Field>
+            <View style={{ marginBottom: 16 }}>
               <AppTextInput
                 label="Phone number"
                 value={phoneNumber}
@@ -306,9 +335,9 @@ export function ProfileScreen() {
                 keyboardType="phone-pad"
                 editable={isEditing && !saving}
               />
-            </Field>
+            </View>
 
-            <Field>
+            <View style={{ marginBottom: 16 }}>
               <AppSelect
                 label="Gender"
                 value={gender}
@@ -320,27 +349,27 @@ export function ProfileScreen() {
                   { label: "Không tiết lộ", value: "Không tiết lộ" },
                 ]}
               />
-            </Field>
+            </View>
 
-            <Field>
+            <View style={{ marginBottom: 16 }}>
               <AppDateInput
                 label="Date of birth"
                 value={dateOfBirth}
                 onChange={setDateOfBirth}
                 disabled={!isEditing || saving}
               />
-            </Field>
+            </View>
 
-            <Field>
+            <View style={{ marginBottom: 16 }}>
               <AppTextInput
                 label="Address"
                 value={address}
                 onChangeText={setAddress}
                 editable={isEditing && !saving}
               />
-            </Field>
+            </View>
 
-            <Field>
+            <View style={{ marginBottom: 16 }}>
               <AppSelect
                 label="Thành phố/Tỉnh"
                 value={province}
@@ -352,9 +381,9 @@ export function ProfileScreen() {
                 options={provinces.map((p) => ({ label: p.name, value: p.name }))}
                 placeholder="Chọn tỉnh/thành"
               />
-            </Field>
+            </View>
 
-            <Field>
+            <View style={{ marginBottom: 16 }}>
               <AppSelect
                 label="Phường/Xã"
                 value={ward}
@@ -363,13 +392,13 @@ export function ProfileScreen() {
                 options={wards.map((w) => ({ label: w.name, value: w.name }))}
                 placeholder={loadingWards ? "Đang tải..." : "Chọn phường/xã"}
               />
-            </Field>
+            </View>
 
             <AppButton mode="outlined" onPress={onLogout} mt={8}>
               Logout
             </AppButton>
           </FormCard>
-        </CardWrap>
+        </View>
       </ScrollView>
     </Surface>
   );

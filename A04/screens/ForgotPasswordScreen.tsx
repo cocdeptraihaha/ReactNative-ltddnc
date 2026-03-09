@@ -13,7 +13,6 @@ import * as authApi from "../lib/auth";
 import { AppButton } from "../components/AppButton";
 import { AppTextInput } from "../components/AppTextInput";
 import { FormCard } from "../components/FormCard";
-import { BottomRow, Container, Field, SubmitWrap } from "./styled/ForgotPasswordScreen.styled";
 
 type ForgotNav = NativeStackNavigationProp<
   RootStackParamList,
@@ -56,10 +55,15 @@ export function ForgotPasswordScreen() {
     >
       <Surface style={{ flex: 1 }}>
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingHorizontal: 24,
+            paddingVertical: 24,
+            justifyContent: "center",
+          }}
           keyboardShouldPersistTaps="handled"
         >
-          <Container>
+          <View style={{ flex: 1 }}>
             <Text
               variant="displaySmall"
               style={{ marginBottom: 8, textAlign: "center" }}
@@ -78,7 +82,7 @@ export function ForgotPasswordScreen() {
             </Text>
 
             <FormCard>
-              <Field>
+              <View style={{ marginBottom: 16 }}>
                 <AppTextInput
                   label="Email"
                   value={email}
@@ -87,9 +91,9 @@ export function ForgotPasswordScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
-              </Field>
+              </View>
 
-              <SubmitWrap>
+              <View style={{ marginBottom: 16 }}>
                 <AppButton
                   mode="contained"
                   onPress={handleSubmit}
@@ -98,9 +102,16 @@ export function ForgotPasswordScreen() {
                 >
                   Gửi mã OTP
                 </AppButton>
-              </SubmitWrap>
+              </View>
 
-              <BottomRow>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  marginTop: 24,
+                }}
+              >
                 <AppButton
                   mode="text"
                   compact
@@ -109,9 +120,9 @@ export function ForgotPasswordScreen() {
                 >
                   Quay lại đăng nhập
                 </AppButton>
-              </BottomRow>
+              </View>
             </FormCard>
-          </Container>
+          </View>
         </ScrollView>
       </Surface>
     </KeyboardAvoidingView>

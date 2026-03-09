@@ -14,15 +14,6 @@ import * as authApi from "../lib/auth";
 import { AppButton } from "../components/AppButton";
 import { AppTextInput } from "../components/AppTextInput";
 import { FormCard } from "../components/FormCard";
-import {
-  BottomRow,
-  Container,
-  DividerLine,
-  DividerRow,
-  Field,
-  SubmitWrap,
-} from "./styled/RegisterScreen.styled";
-
 type RegisterNav = NativeStackNavigationProp<RootStackParamList, "Register">;
 
 export function RegisterScreen() {
@@ -80,10 +71,15 @@ export function RegisterScreen() {
     >
       <Surface style={{ flex: 1 }}>
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingHorizontal: 24,
+            paddingVertical: 24,
+            justifyContent: "center",
+          }}
           keyboardShouldPersistTaps="handled"
         >
-          <Container>
+          <View style={{ flex: 1 }}>
             <Text
               variant="displaySmall"
               style={{ marginBottom: 8, textAlign: "center" }}
@@ -102,7 +98,7 @@ export function RegisterScreen() {
             </Text>
 
             <FormCard>
-              <Field>
+              <View style={{ marginBottom: 16 }}>
                 <AppTextInput
                   label="Họ và tên"
                   value={fullName}
@@ -110,9 +106,9 @@ export function RegisterScreen() {
                   autoCapitalize="words"
                   autoCorrect={false}
                 />
-              </Field>
+              </View>
 
-              <Field>
+              <View style={{ marginBottom: 16 }}>
                 <AppTextInput
                   label="Tên đăng nhập"
                   value={username}
@@ -120,9 +116,9 @@ export function RegisterScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
-              </Field>
+              </View>
 
-              <Field>
+              <View style={{ marginBottom: 16 }}>
                 <AppTextInput
                   label="Email"
                   value={email}
@@ -131,9 +127,9 @@ export function RegisterScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
-              </Field>
+              </View>
 
-              <Field>
+              <View style={{ marginBottom: 16 }}>
                 <AppTextInput
                   label="Mật khẩu"
                   value={password}
@@ -147,9 +143,9 @@ export function RegisterScreen() {
                     />
                   }
                 />
-              </Field>
+              </View>
 
-              <Field>
+              <View style={{ marginBottom: 16 }}>
                 <AppTextInput
                   label="Xác nhận mật khẩu"
                   value={confirmPassword}
@@ -165,9 +161,9 @@ export function RegisterScreen() {
                     />
                   }
                 />
-              </Field>
+              </View>
 
-              <SubmitWrap>
+              <View style={{ marginTop: 8, marginBottom: 16 }}>
                 <AppButton
                   mode="contained"
                   onPress={handleRegister}
@@ -176,17 +172,41 @@ export function RegisterScreen() {
                 >
                   Đăng Ký
                 </AppButton>
-              </SubmitWrap>
+              </View>
 
-              <DividerRow>
-                <DividerLine $color={theme.colors.outline} />
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginVertical: 24,
+                }}
+              >
+                <View
+                  style={{
+                    flex: 1,
+                    height: 1,
+                    backgroundColor: theme.colors.outline,
+                  }}
+                />
                 <Text style={{ marginHorizontal: 16, color: theme.colors.onSurfaceVariant }}>
                   hoặc
                 </Text>
-                <DividerLine $color={theme.colors.outline} />
-              </DividerRow>
+                <View
+                  style={{
+                    flex: 1,
+                    height: 1,
+                    backgroundColor: theme.colors.outline,
+                  }}
+                />
+              </View>
 
-              <BottomRow>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
                 <Text
                   variant="bodyMedium"
                   style={{ color: theme.colors.onSurfaceVariant }}
@@ -201,9 +221,9 @@ export function RegisterScreen() {
                 >
                   Đăng nhập
                 </AppButton>
-              </BottomRow>
+              </View>
             </FormCard>
-          </Container>
+          </View>
         </ScrollView>
       </Surface>
     </KeyboardAvoidingView>

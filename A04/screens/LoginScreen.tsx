@@ -14,7 +14,6 @@ import { useAuth } from "../context/AuthContext";
 import { AppButton } from "../components/AppButton";
 import { AppTextInput } from "../components/AppTextInput";
 import { FormCard } from "../components/FormCard";
-import { BottomRow, Container, DividerLine, DividerRow } from "./styled/LoginScreen.styled";
 
 type LoginNav = NativeStackNavigationProp<RootStackParamList, "Login">;
 
@@ -47,10 +46,15 @@ export function LoginScreen() {
     >
       <Surface style={{ flex: 1 }}>
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingHorizontal: 24,
+            paddingVertical: 24,
+            justifyContent: "center",
+          }}
           keyboardShouldPersistTaps="handled"
         >
-          <Container>
+          <View style={{ flex: 1 }}>
             <Text
               variant="displaySmall"
               style={{ marginBottom: 8, textAlign: "center" }}
@@ -113,15 +117,39 @@ export function LoginScreen() {
                   Đăng Nhập
               </AppButton>
 
-              <DividerRow>
-                <DividerLine $color={theme.colors.outline} />
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginVertical: 24,
+                }}
+              >
+                <View
+                  style={{
+                    flex: 1,
+                    height: 1,
+                    backgroundColor: theme.colors.outline,
+                  }}
+                />
                 <Text style={{ marginHorizontal: 16, color: theme.colors.onSurfaceVariant }}>
                   hoặc
                 </Text>
-                <DividerLine $color={theme.colors.outline} />
-              </DividerRow>
+                <View
+                  style={{
+                    flex: 1,
+                    height: 1,
+                    backgroundColor: theme.colors.outline,
+                  }}
+                />
+              </View>
 
-              <BottomRow>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
                 <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
                   Chưa có tài khoản?{" "}
                 </Text>
@@ -133,9 +161,9 @@ export function LoginScreen() {
                 >
                   Đăng ký ngay
                 </AppButton>
-              </BottomRow>
+              </View>
             </FormCard>
-          </Container>
+          </View>
         </ScrollView>
       </Surface>
     </KeyboardAvoidingView>

@@ -14,14 +14,6 @@ import * as authApi from "../lib/auth";
 import { AppButton } from "../components/AppButton";
 import { AppTextInput } from "../components/AppTextInput";
 import { FormCard } from "../components/FormCard";
-import {
-  BottomRow,
-  Centered,
-  Container,
-  Field,
-  SubmitWrap,
-} from "./styled/VerifyOtpScreen.styled";
-
 type VerifyOtpNav = NativeStackNavigationProp<RootStackParamList, "VerifyOtp">;
 type VerifyOtpRoute = RouteProp<RootStackParamList, "VerifyOtp">;
 
@@ -77,17 +69,24 @@ export function VerifyOtpScreen() {
   if (!email) {
     return (
       <Surface style={{ flex: 1 }}>
-        <Centered>
-        <Text
-          variant="bodyLarge"
-          style={{ marginBottom: 16, textAlign: "center" }}
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 24,
+          }}
         >
-          Thiếu thông tin email. Vui lòng đăng ký lại.
-        </Text>
-        <AppButton mode="contained" onPress={() => navigation.navigate("Register")}>
-          Quay lại đăng ký
-        </AppButton>
-        </Centered>
+          <Text
+            variant="bodyLarge"
+            style={{ marginBottom: 16, textAlign: "center" }}
+          >
+            Thiếu thông tin email. Vui lòng đăng ký lại.
+          </Text>
+          <AppButton mode="contained" onPress={() => navigation.navigate("Register")}>
+            Quay lại đăng ký
+          </AppButton>
+        </View>
       </Surface>
     );
   }
@@ -99,10 +98,15 @@ export function VerifyOtpScreen() {
     >
       <Surface style={{ flex: 1 }}>
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingHorizontal: 24,
+            paddingVertical: 24,
+            justifyContent: "center",
+          }}
           keyboardShouldPersistTaps="handled"
         >
-          <Container>
+          <View style={{ flex: 1 }}>
             <Text
               variant="displaySmall"
               style={{ marginBottom: 8, textAlign: "center" }}
@@ -121,7 +125,7 @@ export function VerifyOtpScreen() {
             </Text>
 
             <FormCard>
-              <Field>
+              <View style={{ marginBottom: 16 }}>
                 <AppTextInput
                   label="Mã OTP"
                   value={otp}
@@ -130,9 +134,9 @@ export function VerifyOtpScreen() {
                   maxLength={6}
                   placeholder="123456"
                 />
-              </Field>
+              </View>
 
-              <SubmitWrap>
+              <View style={{ marginBottom: 16 }}>
                 <AppButton
                   mode="contained"
                   onPress={handleVerify}
@@ -141,20 +145,26 @@ export function VerifyOtpScreen() {
                 >
                   Xác thực
                 </AppButton>
-              </SubmitWrap>
+              </View>
 
               <AppButton
-                  mode="text"
-                  onPress={handleResend}
-                  loading={resendLoading}
-                  disabled={resendLoading}
-                  style={{ marginBottom: 24 }}
-                  contentStyle={{ paddingVertical: 0 }}
-                >
-                  Gửi lại mã OTP
+                mode="text"
+                onPress={handleResend}
+                loading={resendLoading}
+                disabled={resendLoading}
+                style={{ marginBottom: 24 }}
+                contentStyle={{ paddingVertical: 0 }}
+              >
+                Gửi lại mã OTP
               </AppButton>
 
-              <BottomRow>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
                 <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
                   Đã có tài khoản?{" "}
                 </Text>
@@ -166,9 +176,9 @@ export function VerifyOtpScreen() {
                 >
                   Đăng nhập
                 </AppButton>
-              </BottomRow>
+              </View>
             </FormCard>
-          </Container>
+          </View>
         </ScrollView>
       </Surface>
     </KeyboardAvoidingView>

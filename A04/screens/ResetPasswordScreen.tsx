@@ -13,14 +13,6 @@ import * as authApi from "../lib/auth";
 import { AppButton } from "../components/AppButton";
 import { AppTextInput } from "../components/AppTextInput";
 import { FormCard } from "../components/FormCard";
-import {
-  BottomRow,
-  Centered,
-  Container,
-  Field,
-  SubmitWrap,
-} from "./styled/ResetPasswordScreen.styled";
-
 type ResetNav = NativeStackNavigationProp<
   RootStackParamList,
   "ResetPassword"
@@ -73,20 +65,27 @@ export function ResetPasswordScreen() {
   if (!email) {
     return (
       <Surface style={{ flex: 1 }}>
-        <Centered>
-        <Text
-          variant="bodyLarge"
-          style={{ marginBottom: 16, textAlign: "center" }}
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 24,
+          }}
         >
-          Thiếu thông tin email. Vui lòng thực hiện quên mật khẩu trước.
-        </Text>
-        <AppButton
-          mode="contained"
-          onPress={() => navigation.navigate("ForgotPassword")}
-        >
-          Quên mật khẩu
-        </AppButton>
-        </Centered>
+          <Text
+            variant="bodyLarge"
+            style={{ marginBottom: 16, textAlign: "center" }}
+          >
+            Thiếu thông tin email. Vui lòng thực hiện quên mật khẩu trước.
+          </Text>
+          <AppButton
+            mode="contained"
+            onPress={() => navigation.navigate("ForgotPassword")}
+          >
+            Quên mật khẩu
+          </AppButton>
+        </View>
       </Surface>
     );
   }
@@ -98,10 +97,15 @@ export function ResetPasswordScreen() {
     >
       <Surface style={{ flex: 1 }}>
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingHorizontal: 24,
+            paddingVertical: 24,
+            justifyContent: "center",
+          }}
           keyboardShouldPersistTaps="handled"
         >
-          <Container>
+          <View style={{ flex: 1 }}>
             <Text
               variant="displaySmall"
               style={{ marginBottom: 8, textAlign: "center" }}
@@ -120,7 +124,7 @@ export function ResetPasswordScreen() {
             </Text>
 
             <FormCard>
-              <Field>
+              <View style={{ marginBottom: 16 }}>
                 <AppTextInput
                   label="Mã OTP"
                   value={otp}
@@ -128,9 +132,9 @@ export function ResetPasswordScreen() {
                   keyboardType="number-pad"
                   maxLength={6}
                 />
-              </Field>
+              </View>
 
-              <Field>
+              <View style={{ marginBottom: 16 }}>
                 <AppTextInput
                   label="Mật khẩu mới"
                   value={newPassword}
@@ -143,9 +147,9 @@ export function ResetPasswordScreen() {
                     />
                   }
                 />
-              </Field>
+              </View>
 
-              <Field>
+              <View style={{ marginBottom: 16 }}>
                 <AppTextInput
                   label="Xác nhận mật khẩu"
                   value={confirmPassword}
@@ -158,9 +162,9 @@ export function ResetPasswordScreen() {
                     />
                   }
                 />
-              </Field>
+              </View>
 
-              <SubmitWrap>
+              <View style={{ marginBottom: 16 }}>
                 <AppButton
                   mode="contained"
                   onPress={handleSubmit}
@@ -169,9 +173,16 @@ export function ResetPasswordScreen() {
                 >
                   Đặt lại mật khẩu
                 </AppButton>
-              </SubmitWrap>
+              </View>
 
-              <BottomRow>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  marginTop: 24,
+                }}
+              >
                 <AppButton
                   mode="text"
                   compact
@@ -180,9 +191,9 @@ export function ResetPasswordScreen() {
                 >
                   Quay lại đăng nhập
                 </AppButton>
-              </BottomRow>
+              </View>
             </FormCard>
-          </Container>
+          </View>
         </ScrollView>
       </Surface>
     </KeyboardAvoidingView>

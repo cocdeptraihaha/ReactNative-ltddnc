@@ -6,7 +6,6 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootStack";
 import { useAuth } from "../context/AuthContext";
 import { AppButton } from "../components/AppButton";
-import { ButtonsWrap, Container } from "./styled/WelcomeScreen.styled";
 
 type WelcomeNav = NativeStackNavigationProp<RootStackParamList, "Welcome">;
 
@@ -31,7 +30,14 @@ export function WelcomeScreen() {
 
   return (
     <Surface style={{ flex: 1 }}>
-      <Container>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 24,
+        }}
+      >
         <Text variant="displayMedium" style={{ marginBottom: 12, textAlign: "center" }}>
           Chào mừng!
         </Text>
@@ -47,7 +53,7 @@ export function WelcomeScreen() {
           Vui lòng đăng nhập hoặc đăng ký để tiếp tục
         </Text>
 
-        <ButtonsWrap>
+        <View style={{ width: "100%", maxWidth: 400 }}>
           <AppButton
             mode="contained"
             style={{ marginBottom: 16 }}
@@ -63,8 +69,8 @@ export function WelcomeScreen() {
           >
             Đăng Ký
           </AppButton>
-        </ButtonsWrap>
-      </Container>
+        </View>
+      </View>
     </Surface>
   );
 }
