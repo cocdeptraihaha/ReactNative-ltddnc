@@ -7,6 +7,7 @@ import { ProfileScreen } from "../screens/ProfileScreen";
 import { VerifyOtpScreen } from "../screens/VerifyOtpScreen";
 import { ForgotPasswordScreen } from "../screens/ForgotPasswordScreen";
 import { ResetPasswordScreen } from "../screens/ResetPasswordScreen";
+import { BookDetailScreen } from "../screens/BookDetailScreen";
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -17,6 +18,7 @@ export type RootStackParamList = {
   VerifyOtp: { email: string };
   ForgotPassword: undefined;
   ResetPassword: { email: string };
+  BookDetail: { bookId: number };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -35,6 +37,7 @@ export function RootStack() {
       <Stack.Screen name="VerifyOtp" component={VerifyOtpScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+      <Stack.Screen name="BookDetail" component={BookDetailScreen} />
     </Stack.Navigator>
   );
 }

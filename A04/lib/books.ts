@@ -11,6 +11,23 @@ export type Book = {
   publication_date?: string | null;
 };
 
+export type BookDetail = {
+  id: number;
+  description?: string | null;
+  image_url?: string | null;
+  pages?: number | null;
+  publisher?: string | null;
+  supplier?: string | null;
+  height?: number | null;
+  width?: number | null;
+  length?: number | null;
+  weight?: number | null;
+};
+
+export type BookWithDetail = Book & {
+  book_detail?: BookDetail | null;
+};
+
 export type Page<T> = {
   items: T[];
   total: number;
@@ -32,5 +49,9 @@ export async function getBooks(params: {
   const query = search.toString();
   const path = `/books/${query ? `?${query}` : ""}`;
   return apiFetch<Page<Book>>(path);
+}
+
+export async function getBook(id: number): Promise<BookWithDetail> {
+  return apiFetch<BookWithDetail>(`/books/${id}`);
 }
 

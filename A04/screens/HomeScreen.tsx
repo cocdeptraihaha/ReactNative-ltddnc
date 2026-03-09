@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ScrollView, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { ActivityIndicator, Surface, Text, useTheme } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -157,45 +157,49 @@ export function HomeScreen() {
             )}
 
             {booksPage?.items.map((b) => (
-              <View
+              <Pressable
                 key={b.id}
-                style={{
-                  paddingVertical: 8,
-                  borderBottomWidth: 1,
-                  borderBottomColor: theme.colors.outlineVariant,
-                }}
+                onPress={() => navigation.navigate("BookDetail", { bookId: b.id })}
               >
-                <Text
-                  variant="titleMedium"
-                  style={{ fontWeight: "600", color: theme.colors.onSurface }}
+                <View
+                  style={{
+                    paddingVertical: 8,
+                    borderBottomWidth: 1,
+                    borderBottomColor: theme.colors.outlineVariant,
+                  }}
                 >
-                  {b.title ?? "Untitled book"}
-                </Text>
-                {b.author && (
                   <Text
-                    variant="bodyMedium"
-                    style={{ color: theme.colors.onSurfaceVariant }}
+                    variant="titleMedium"
+                    style={{ fontWeight: "600", color: theme.colors.onSurface }}
                   >
-                    {b.author}
+                    {b.title ?? "Untitled book"}
                   </Text>
-                )}
-                {b.selling_price != null && (
-                  <Text
-                    variant="bodyMedium"
-                    style={{ color: theme.colors.primary, marginTop: 2 }}
-                  >
-                    {b.selling_price.toLocaleString("vi-VN")} đ
-                  </Text>
-                )}
-                {b.publication_date && (
-                  <Text
-                    variant="bodySmall"
-                    style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
-                  >
-                    Published: {formatDateVN(new Date(b.publication_date))}
-                  </Text>
-                )}
-              </View>
+                  {b.author && (
+                    <Text
+                      variant="bodyMedium"
+                      style={{ color: theme.colors.onSurfaceVariant }}
+                    >
+                      {b.author}
+                    </Text>
+                  )}
+                  {b.selling_price != null && (
+                    <Text
+                      variant="bodyMedium"
+                      style={{ color: theme.colors.primary, marginTop: 2 }}
+                    >
+                      {b.selling_price.toLocaleString("vi-VN")} đ
+                    </Text>
+                  )}
+                  {b.publication_date && (
+                    <Text
+                      variant="bodySmall"
+                      style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
+                    >
+                      Published: {formatDateVN(new Date(b.publication_date))}
+                    </Text>
+                  )}
+                </View>
+              </Pressable>
             ))}
 
             {booksPage && (

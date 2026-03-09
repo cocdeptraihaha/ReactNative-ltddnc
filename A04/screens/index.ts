@@ -6,4 +6,5 @@ export { ProfileScreen } from "./ProfileScreen";
 export { VerifyOtpScreen } from "./VerifyOtpScreen";
 export { ForgotPasswordScreen } from "./ForgotPasswordScreen";
 export { ResetPasswordScreen } from "./ResetPasswordScreen";
+export { BookDetailScreen } from "./BookDetailScreen";
 
