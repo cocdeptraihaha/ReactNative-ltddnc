@@ -28,6 +28,7 @@ export function HomeScreen() {
   const { user, token, isReady, logout } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
   const [size] = useState(10);
   const [booksPage, setBooksPage] = useState<Page<Book> | null>(null);
@@ -57,11 +58,19 @@ export function HomeScreen() {
   }, [isReady, token, navigation]);
 
   useEffect(() => {
+    const handle = setTimeout(() => {
+      setPage(1);
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [search]);
+
+  useEffect(() => {
     (async () => {
       try {
         setLoadingBooks(true);
         setError(null);
-        const data = await getBooks({ page, size, q: search });
+        const data = await getBooks({ page, size, q: debouncedSearch });
         setBooksPage(data);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load books");
@@ -69,7 +78,7 @@ export function HomeScreen() {
         setLoadingBooks(false);
       }
     })();
-  }, [page, size, search]);
+  }, [page, size, debouncedSearch]);
 
   if (!isReady || !token) {
     return (
@@ -93,10 +102,6 @@ export function HomeScreen() {
   const handleProfile = () => {
     setMenuVisible(false);
     navigation.navigate("Profile");
-  };
-
-  const handleSearchSubmit = () => {
-    setPage(1);
   };
 
   const handlePrevPage = () => {
@@ -135,7 +140,6 @@ export function HomeScreen() {
               label="Search by title or author"
               value={search}
               onChangeText={setSearch}
-              onSubmitEditing={handleSearchSubmit}
               editable={!loadingBooks}
               mb={8}
               returnKeyType="search"
