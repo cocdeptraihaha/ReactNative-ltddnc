@@ -39,3 +39,6 @@ Thumbs.db
 # IDE
 .idea/
 .vscode/
+
+# Agents / local tooling
+.cursor/
