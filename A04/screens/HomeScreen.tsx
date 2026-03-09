@@ -10,6 +10,7 @@ import { FormCard } from "../components/FormCard";
 import { AppTextInput } from "../components/AppTextInput";
 import { AppButton } from "../components/AppButton";
 import { getBooks, type Book, type Page } from "../lib/books";
+import { getCategories, type Category } from "../lib/categories";
 import { formatDateVN } from "../utils/date";
 import {
   CardTitleWrap,
@@ -34,6 +35,7 @@ export function HomeScreen() {
   const [loadingBooks, setLoadingBooks] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const searchInputRef = useRef("");
+  const [categories, setCategories] = useState<Category[]>([]);
 
   function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
     if (value === undefined || value === null || value === "") return null;
@@ -56,6 +58,17 @@ export function HomeScreen() {
       navigation.replace("Welcome");
     }
   }, [isReady, token, navigation]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getCategories();
+        setCategories(data);
+      } catch {
+        // ignore category load errors on home
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -132,6 +145,38 @@ export function HomeScreen() {
               </Text>
             </CardTitleWrap>
             <InfoRow label="Welcome" value={user?.full_name ?? user?.email ?? null} />
+
+            {categories.length > 0 && (
+              <View style={{ marginBottom: 8 }}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingVertical: 4 }}
+                >
+                  {categories.map((cat) => (
+                    <View
+                      key={cat.id}
+                      style={{
+                        marginRight: 8,
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                        borderRadius: 999,
+                        borderWidth: 1,
+                        borderColor: theme.colors.outline,
+                        backgroundColor: theme.colors.surface,
+                      }}
+                    >
+                      <Text
+                        variant="bodySmall"
+                        style={{ color: theme.colors.onSurfaceVariant }}
+                      >
+                        {cat.name}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
 
             <AppTextInput
               label="Search by title or author"
