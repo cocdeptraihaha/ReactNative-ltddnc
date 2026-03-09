@@ -6,17 +6,22 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import { Text, TextInput, Button, Card, Surface } from "react-native-paper";
+import { Text, Surface, useTheme, TextInput } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootStack";
 import { useAuth } from "../context/AuthContext";
+import { AppButton } from "../components/AppButton";
+import { AppTextInput } from "../components/AppTextInput";
+import { FormCard } from "../components/FormCard";
+import { BottomRow, Container, DividerLine, DividerRow } from "./styled/LoginScreen.styled";
 
 type LoginNav = NativeStackNavigationProp<RootStackParamList, "Login">;
 
 export function LoginScreen() {
   const navigation = useNavigation<LoginNav>();
   const { login, isLoading } = useAuth();
+  const theme = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -45,7 +50,7 @@ export function LoginScreen() {
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={{ flex: 1, padding: 24, justifyContent: "center" }}>
+          <Container>
             <Text
               variant="displaySmall"
               style={{ marginBottom: 8, textAlign: "center" }}
@@ -57,30 +62,27 @@ export function LoginScreen() {
               style={{
                 marginBottom: 32,
                 textAlign: "center",
-                color: "#666",
+                color: theme.colors.onSurfaceVariant,
               }}
             >
               Chào mừng bạn trở lại!
             </Text>
 
-            <Card style={{ padding: 16 }}>
-              <Card.Content>
-                <TextInput
+            <FormCard>
+              <AppTextInput
                   label="Email"
                   value={email}
                   onChangeText={setEmail}
-                  mode="outlined"
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
                   style={{ marginBottom: 16 }}
-                />
+              />
 
-                <TextInput
+              <AppTextInput
                   label="Mật khẩu"
                   value={password}
                   onChangeText={setPassword}
-                  mode="outlined"
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   right={
@@ -90,74 +92,50 @@ export function LoginScreen() {
                     />
                   }
                   style={{ marginBottom: 16 }}
-                />
+              />
 
-                <Button
+              <AppButton
                   mode="text"
                   onPress={() => navigation.navigate("ForgotPassword")}
                   style={{ alignSelf: "flex-end", marginBottom: 24 }}
+                  contentStyle={{ paddingVertical: 0 }}
                 >
                   Quên mật khẩu?
-                </Button>
+              </AppButton>
 
-                <Button
+              <AppButton
                   mode="contained"
                   onPress={handleLogin}
                   loading={isLoading}
                   disabled={isLoading}
                   style={{ marginBottom: 16 }}
-                  contentStyle={{ paddingVertical: 8 }}
                 >
                   Đăng Nhập
-                </Button>
+              </AppButton>
 
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginVertical: 24,
-                  }}
-                >
-                  <View
-                    style={{
-                      flex: 1,
-                      height: 1,
-                      backgroundColor: "#e0e0e0",
-                    }}
-                  />
-                  <Text style={{ marginHorizontal: 16, color: "#999" }}>
-                    hoặc
-                  </Text>
-                  <View
-                    style={{
-                      flex: 1,
-                      height: 1,
-                      backgroundColor: "#e0e0e0",
-                    }}
-                  />
-                </View>
+              <DividerRow>
+                <DividerLine $color={theme.colors.outline} />
+                <Text style={{ marginHorizontal: 16, color: theme.colors.onSurfaceVariant }}>
+                  hoặc
+                </Text>
+                <DividerLine $color={theme.colors.outline} />
+              </DividerRow>
 
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
+              <BottomRow>
+                <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                  Chưa có tài khoản?{" "}
+                </Text>
+                <AppButton
+                  mode="text"
+                  compact
+                  onPress={() => navigation.navigate("Register")}
+                  contentStyle={{ paddingVertical: 0 }}
                 >
-                  <Text variant="bodyMedium" style={{ color: "#666" }}>
-                    Chưa có tài khoản?{" "}
-                  </Text>
-                  <Button
-                    mode="text"
-                    compact
-                    onPress={() => navigation.navigate("Register")}
-                  >
-                    Đăng ký ngay
-                  </Button>
-                </View>
-              </Card.Content>
-            </Card>
-          </View>
+                  Đăng ký ngay
+                </AppButton>
+              </BottomRow>
+            </FormCard>
+          </Container>
         </ScrollView>
       </Surface>
     </KeyboardAvoidingView>

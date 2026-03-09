@@ -1,17 +1,26 @@
 import React, { useState } from "react";
 import {
-  View,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Alert,
 } from "react-native";
-import { Text, TextInput, Button, Card, Surface } from "react-native-paper";
+import { Surface, Text, TextInput, useTheme } from "react-native-paper";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootStack";
 import { useAuth } from "../context/AuthContext";
 import * as authApi from "../lib/auth";
+import { AppButton } from "../components/AppButton";
+import { AppTextInput } from "../components/AppTextInput";
+import { FormCard } from "../components/FormCard";
+import {
+  BottomRow,
+  Centered,
+  Container,
+  Field,
+  SubmitWrap,
+} from "./styled/VerifyOtpScreen.styled";
 
 type VerifyOtpNav = NativeStackNavigationProp<RootStackParamList, "VerifyOtp">;
 type VerifyOtpRoute = RouteProp<RootStackParamList, "VerifyOtp">;
@@ -21,6 +30,7 @@ export function VerifyOtpScreen() {
   const route = useRoute<VerifyOtpRoute>();
   const email = route.params?.email ?? "";
   const { setAuth } = useAuth();
+  const theme = useTheme();
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -66,23 +76,18 @@ export function VerifyOtpScreen() {
 
   if (!email) {
     return (
-      <Surface
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          padding: 24,
-        }}
-      >
+      <Surface style={{ flex: 1 }}>
+        <Centered>
         <Text
           variant="bodyLarge"
           style={{ marginBottom: 16, textAlign: "center" }}
         >
           Thiếu thông tin email. Vui lòng đăng ký lại.
         </Text>
-        <Button mode="contained" onPress={() => navigation.navigate("Register")}>
+        <AppButton mode="contained" onPress={() => navigation.navigate("Register")}>
           Quay lại đăng ký
-        </Button>
+        </AppButton>
+        </Centered>
       </Surface>
     );
   }
@@ -97,7 +102,7 @@ export function VerifyOtpScreen() {
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={{ flex: 1, padding: 24, justifyContent: "center" }}>
+          <Container>
             <Text
               variant="displaySmall"
               style={{ marginBottom: 8, textAlign: "center" }}
@@ -109,67 +114,61 @@ export function VerifyOtpScreen() {
               style={{
                 marginBottom: 32,
                 textAlign: "center",
-                color: "#666",
+                color: theme.colors.onSurfaceVariant,
               }}
             >
               Nhập mã OTP đã gửi đến {email}
             </Text>
 
-            <Card style={{ padding: 16 }}>
-              <Card.Content>
-                <TextInput
+            <FormCard>
+              <Field>
+                <AppTextInput
                   label="Mã OTP"
                   value={otp}
                   onChangeText={setOtp}
-                  mode="outlined"
                   keyboardType="number-pad"
                   maxLength={6}
                   placeholder="123456"
-                  style={{ marginBottom: 16 }}
                 />
+              </Field>
 
-                <Button
+              <SubmitWrap>
+                <AppButton
                   mode="contained"
                   onPress={handleVerify}
                   loading={loading}
                   disabled={loading}
-                  style={{ marginBottom: 16 }}
-                  contentStyle={{ paddingVertical: 8 }}
                 >
                   Xác thực
-                </Button>
+                </AppButton>
+              </SubmitWrap>
 
-                <Button
+              <AppButton
                   mode="text"
                   onPress={handleResend}
                   loading={resendLoading}
                   disabled={resendLoading}
                   style={{ marginBottom: 24 }}
+                  contentStyle={{ paddingVertical: 0 }}
                 >
                   Gửi lại mã OTP
-                </Button>
+              </AppButton>
 
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
+              <BottomRow>
+                <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                  Đã có tài khoản?{" "}
+                </Text>
+                <AppButton
+                  mode="text"
+                  compact
+                  onPress={() => navigation.navigate("Login")}
+                  contentStyle={{ paddingVertical: 0 }}
                 >
-                  <Text variant="bodyMedium" style={{ color: "#666" }}>
-                    Đã có tài khoản?{" "}
-                  </Text>
-                  <Button
-                    mode="text"
-                    compact
-                    onPress={() => navigation.navigate("Login")}
-                  >
-                    Đăng nhập
-                  </Button>
-                </View>
-              </Card.Content>
-            </Card>
-          </View>
+                  Đăng nhập
+                </AppButton>
+              </BottomRow>
+            </FormCard>
+          </Container>
         </ScrollView>
       </Surface>
     </KeyboardAvoidingView>

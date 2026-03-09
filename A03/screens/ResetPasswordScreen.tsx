@@ -1,16 +1,25 @@
 import React, { useState } from "react";
 import {
-  View,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Alert,
 } from "react-native";
-import { Text, TextInput, Button, Card, Surface } from "react-native-paper";
+import { Surface, Text, TextInput, useTheme } from "react-native-paper";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootStack";
 import * as authApi from "../lib/auth";
+import { AppButton } from "../components/AppButton";
+import { AppTextInput } from "../components/AppTextInput";
+import { FormCard } from "../components/FormCard";
+import {
+  BottomRow,
+  Centered,
+  Container,
+  Field,
+  SubmitWrap,
+} from "./styled/ResetPasswordScreen.styled";
 
 type ResetNav = NativeStackNavigationProp<
   RootStackParamList,
@@ -22,6 +31,7 @@ export function ResetPasswordScreen() {
   const navigation = useNavigation<ResetNav>();
   const route = useRoute<ResetRoute>();
   const email = route.params?.email ?? "";
+  const theme = useTheme();
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -62,26 +72,21 @@ export function ResetPasswordScreen() {
 
   if (!email) {
     return (
-      <Surface
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          padding: 24,
-        }}
-      >
+      <Surface style={{ flex: 1 }}>
+        <Centered>
         <Text
           variant="bodyLarge"
           style={{ marginBottom: 16, textAlign: "center" }}
         >
           Thiếu thông tin email. Vui lòng thực hiện quên mật khẩu trước.
         </Text>
-        <Button
+        <AppButton
           mode="contained"
           onPress={() => navigation.navigate("ForgotPassword")}
         >
           Quên mật khẩu
-        </Button>
+        </AppButton>
+        </Centered>
       </Surface>
     );
   }
@@ -96,7 +101,7 @@ export function ResetPasswordScreen() {
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={{ flex: 1, padding: 24, justifyContent: "center" }}>
+          <Container>
             <Text
               variant="displaySmall"
               style={{ marginBottom: 8, textAlign: "center" }}
@@ -108,29 +113,28 @@ export function ResetPasswordScreen() {
               style={{
                 marginBottom: 32,
                 textAlign: "center",
-                color: "#666",
+                color: theme.colors.onSurfaceVariant,
               }}
             >
               Nhập mã OTP và mật khẩu mới
             </Text>
 
-            <Card style={{ padding: 16 }}>
-              <Card.Content>
-                <TextInput
+            <FormCard>
+              <Field>
+                <AppTextInput
                   label="Mã OTP"
                   value={otp}
                   onChangeText={setOtp}
-                  mode="outlined"
                   keyboardType="number-pad"
                   maxLength={6}
-                  style={{ marginBottom: 16 }}
                 />
+              </Field>
 
-                <TextInput
+              <Field>
+                <AppTextInput
                   label="Mật khẩu mới"
                   value={newPassword}
                   onChangeText={setNewPassword}
-                  mode="outlined"
                   secureTextEntry={!showPassword}
                   right={
                     <TextInput.Icon
@@ -138,14 +142,14 @@ export function ResetPasswordScreen() {
                       onPress={() => setShowPassword(!showPassword)}
                     />
                   }
-                  style={{ marginBottom: 16 }}
                 />
+              </Field>
 
-                <TextInput
+              <Field>
+                <AppTextInput
                   label="Xác nhận mật khẩu"
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
-                  mode="outlined"
                   secureTextEntry={!showConfirm}
                   right={
                     <TextInput.Icon
@@ -153,39 +157,32 @@ export function ResetPasswordScreen() {
                       onPress={() => setShowConfirm(!showConfirm)}
                     />
                   }
-                  style={{ marginBottom: 16 }}
                 />
+              </Field>
 
-                <Button
+              <SubmitWrap>
+                <AppButton
                   mode="contained"
                   onPress={handleSubmit}
                   loading={loading}
                   disabled={loading}
-                  style={{ marginBottom: 16 }}
-                  contentStyle={{ paddingVertical: 8 }}
                 >
                   Đặt lại mật khẩu
-                </Button>
+                </AppButton>
+              </SubmitWrap>
 
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    marginTop: 24,
-                  }}
+              <BottomRow>
+                <AppButton
+                  mode="text"
+                  compact
+                  onPress={() => navigation.navigate("Login")}
+                  contentStyle={{ paddingVertical: 0 }}
                 >
-                  <Button
-                    mode="text"
-                    compact
-                    onPress={() => navigation.navigate("Login")}
-                  >
-                    Quay lại đăng nhập
-                  </Button>
-                </View>
-              </Card.Content>
-            </Card>
-          </View>
+                  Quay lại đăng nhập
+                </AppButton>
+              </BottomRow>
+            </FormCard>
+          </Container>
         </ScrollView>
       </Surface>
     </KeyboardAvoidingView>

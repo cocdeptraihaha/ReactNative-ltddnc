@@ -1,43 +1,49 @@
 import { useEffect, useState } from "react";
-import { ScrollView, View, StyleSheet } from "react-native";
+import { ScrollView, View } from "react-native";
 import {
   ActivityIndicator,
-  Card,
   Surface,
   Text,
+  useTheme,
 } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootStack";
 import { useAuth } from "../context/AuthContext";
 import { HomeHeader } from "../components/HomeHeader";
+import { FormCard } from "../components/FormCard";
+import {
+  CardTitleWrap,
+  CardWrap,
+  Centered,
+  Container,
+  InfoRowWrap,
+  LabelWrap,
+} from "./styled/HomeScreen.styled";
 
 type HomeNav = NativeStackNavigationProp<RootStackParamList, "Home">;
 
-function InfoRow({
-  label,
-  value,
-}: {
-  label: string;
-  value?: string | number | null;
-}) {
-  if (value === undefined || value === null || value === "") return null;
-  return (
-    <View style={styles.infoRow}>
-      <Text variant="labelMedium" style={styles.infoLabel}>
-        {label}
-      </Text>
-      <Text variant="bodyMedium" style={styles.infoValue}>
-        {String(value)}
-      </Text>
-    </View>
-  );
-}
-
 export function HomeScreen() {
+  const theme = useTheme();
   const navigation = useNavigation<HomeNav>();
   const { user, token, isReady, logout } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
+
+  function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
+    if (value === undefined || value === null || value === "") return null;
+    return (
+      <InfoRowWrap>
+        <LabelWrap>
+          <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+            {label}
+          </Text>
+        </LabelWrap>
+        <Text variant="bodyMedium" style={{ color: theme.colors.onSurface }}>
+          {String(value)}
+        </Text>
+      </InfoRowWrap>
+    );
+  }
 
   useEffect(() => {
     if (isReady && !token) {
@@ -47,11 +53,13 @@ export function HomeScreen() {
 
   if (!isReady || !token) {
     return (
-      <Surface style={styles.centered}>
+      <Surface style={{ flex: 1 }}>
+        <Centered>
         <ActivityIndicator size="large" />
-        <Text variant="bodyLarge" style={styles.loadingText}>
+        <Text variant="bodyLarge" style={{ marginTop: 12 }}>
           Loading...
         </Text>
+        </Centered>
       </Surface>
     );
   }
@@ -63,7 +71,7 @@ export function HomeScreen() {
   };
 
   return (
-    <Surface style={styles.container}>
+    <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <HomeHeader
         title="KeBook"
         userDisplayName={user?.full_name ?? user?.email ?? undefined}
@@ -73,12 +81,14 @@ export function HomeScreen() {
         onLogout={handleLogout}
       />
 
-      <ScrollView style={styles.scroll}>
-        <Card style={styles.userCard} mode="elevated">
-          <Card.Content>
-            <Text variant="titleMedium" style={styles.cardTitle}>
-              Account information
-            </Text>
+      <ScrollView style={{ flex: 1 }}>
+        <CardWrap>
+          <FormCard>
+            <CardTitleWrap>
+              <Text variant="titleMedium" style={{ fontWeight: "700", color: theme.colors.onSurface }}>
+                Account information
+              </Text>
+            </CardTitleWrap>
 
             <InfoRow label="ID" value={user?.id} />
             <InfoRow label="Full name" value={user?.full_name} />
@@ -94,74 +104,12 @@ export function HomeScreen() {
                     : undefined
               }
             />
+            <InfoRow label="Vai trò" value={user?.is_superuser === true ? "Admin" : "User"} />
 
-            {user &&
-              Object.entries(user as Record<string, unknown>).map(
-                ([key, value]) => {
-                  if (
-                    ["id", "full_name", "username", "email", "is_active"].includes(
-                      key,
-                    )
-                  )
-                    return null;
-                  if (value === undefined || value === null) return null;
-
-                  const display =
-                    typeof value === "object" && value !== null
-                      ? JSON.stringify(value)
-                      : String(value);
-                  if (!display) return null;
-
-                  return (
-                    <InfoRow
-                      key={key}
-                      label={key.replace(/_/g, " ")}
-                      value={display}
-                    />
-                  );
-                },
-              )}
-          </Card.Content>
-        </Card>
+          </FormCard>
+        </CardWrap>
       </ScrollView>
     </Surface>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
-  centered: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    marginTop: 12,
-  },
-  scroll: {
-    flex: 1,
-  },
-  userCard: {
-    margin: 12,
-    backgroundColor: "#fff",
-  },
-  cardTitle: {
-    fontWeight: "700",
-    marginBottom: 16,
-    color: "#333",
-  },
-  infoRow: {
-    marginBottom: 12,
-  },
-  infoLabel: {
-    color: "#666",
-    marginBottom: 2,
-  },
-  infoValue: {
-    color: "#111",
-  },
-});
 

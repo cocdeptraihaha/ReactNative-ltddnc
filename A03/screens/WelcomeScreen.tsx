@@ -1,16 +1,19 @@
 import { useEffect } from "react";
 import { View } from "react-native";
-import { Text, Button, Surface } from "react-native-paper";
+import { Text, Surface, useTheme } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootStack";
 import { useAuth } from "../context/AuthContext";
+import { AppButton } from "../components/AppButton";
+import { ButtonsWrap, Container } from "./styled/WelcomeScreen.styled";
 
 type WelcomeNav = NativeStackNavigationProp<RootStackParamList, "Welcome">;
 
 export function WelcomeScreen() {
   const navigation = useNavigation<WelcomeNav>();
   const { token, isReady } = useAuth();
+  const theme = useTheme();
 
   useEffect(() => {
     if (isReady && token) {
@@ -28,7 +31,7 @@ export function WelcomeScreen() {
 
   return (
     <Surface style={{ flex: 1 }}>
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 24 }}>
+      <Container>
         <Text variant="displayMedium" style={{ marginBottom: 12, textAlign: "center" }}>
           Chào mừng!
         </Text>
@@ -38,32 +41,30 @@ export function WelcomeScreen() {
             marginBottom: 48,
             textAlign: "center",
             paddingHorizontal: 20,
-            color: "#666",
+            color: theme.colors.onSurfaceVariant,
           }}
         >
           Vui lòng đăng nhập hoặc đăng ký để tiếp tục
         </Text>
 
-        <View style={{ width: "100%", maxWidth: 400 }}>
-          <Button
+        <ButtonsWrap>
+          <AppButton
             mode="contained"
             style={{ marginBottom: 16 }}
-            contentStyle={{ paddingVertical: 8 }}
             onPress={() => navigation.navigate("Login")}
           >
             Đăng Nhập
-          </Button>
+          </AppButton>
 
-          <Button
+          <AppButton
             mode="outlined"
             style={{ marginBottom: 16 }}
-            contentStyle={{ paddingVertical: 8 }}
             onPress={() => navigation.navigate("Register")}
           >
             Đăng Ký
-          </Button>
-        </View>
-      </View>
+          </AppButton>
+        </ButtonsWrap>
+      </Container>
     </Surface>
   );
 }

@@ -1,16 +1,19 @@
 import React, { useState } from "react";
 import {
-  View,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Alert,
 } from "react-native";
-import { Text, TextInput, Button, Card, Surface } from "react-native-paper";
+import { Text, Surface, useTheme } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootStack";
 import * as authApi from "../lib/auth";
+import { AppButton } from "../components/AppButton";
+import { AppTextInput } from "../components/AppTextInput";
+import { FormCard } from "../components/FormCard";
+import { BottomRow, Container, Field, SubmitWrap } from "./styled/ForgotPasswordScreen.styled";
 
 type ForgotNav = NativeStackNavigationProp<
   RootStackParamList,
@@ -19,6 +22,7 @@ type ForgotNav = NativeStackNavigationProp<
 
 export function ForgotPasswordScreen() {
   const navigation = useNavigation<ForgotNav>();
+  const theme = useTheme();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -55,7 +59,7 @@ export function ForgotPasswordScreen() {
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={{ flex: 1, padding: 24, justifyContent: "center" }}>
+          <Container>
             <Text
               variant="displaySmall"
               style={{ marginBottom: 8, textAlign: "center" }}
@@ -67,55 +71,47 @@ export function ForgotPasswordScreen() {
               style={{
                 marginBottom: 32,
                 textAlign: "center",
-                color: "#666",
+                color: theme.colors.onSurfaceVariant,
               }}
             >
               Nhập email để nhận mã OTP đặt lại mật khẩu
             </Text>
 
-            <Card style={{ padding: 16 }}>
-              <Card.Content>
-                <TextInput
+            <FormCard>
+              <Field>
+                <AppTextInput
                   label="Email"
                   value={email}
                   onChangeText={setEmail}
-                  mode="outlined"
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
-                  style={{ marginBottom: 16 }}
                 />
+              </Field>
 
-                <Button
+              <SubmitWrap>
+                <AppButton
                   mode="contained"
                   onPress={handleSubmit}
                   loading={loading}
                   disabled={loading}
-                  style={{ marginBottom: 16 }}
-                  contentStyle={{ paddingVertical: 8 }}
                 >
                   Gửi mã OTP
-                </Button>
+                </AppButton>
+              </SubmitWrap>
 
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    marginTop: 24,
-                  }}
+              <BottomRow>
+                <AppButton
+                  mode="text"
+                  compact
+                  onPress={() => navigation.navigate("Login")}
+                  contentStyle={{ paddingVertical: 0 }}
                 >
-                  <Button
-                    mode="text"
-                    compact
-                    onPress={() => navigation.navigate("Login")}
-                  >
-                    Quay lại đăng nhập
-                  </Button>
-                </View>
-              </Card.Content>
-            </Card>
-          </View>
+                  Quay lại đăng nhập
+                </AppButton>
+              </BottomRow>
+            </FormCard>
+          </Container>
         </ScrollView>
       </Surface>
     </KeyboardAvoidingView>

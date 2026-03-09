@@ -6,6 +6,7 @@ export type User = {
   username?: string;
   full_name?: string;
   is_active?: boolean;
+  is_superuser?: boolean;
 };
 
 export type LoginResponse = {

@@ -9,13 +9,25 @@ import {
   ScrollView,
   View,
 } from "react-native";
-import { Button, Card, Surface, Text, TextInput } from "react-native-paper";
+import { Surface, Text, TextInput, useTheme } from "react-native-paper";
 import * as authApi from "../lib/auth";
+import { AppButton } from "../components/AppButton";
+import { AppTextInput } from "../components/AppTextInput";
+import { FormCard } from "../components/FormCard";
+import {
+  BottomRow,
+  Container,
+  DividerLine,
+  DividerRow,
+  Field,
+  SubmitWrap,
+} from "./styled/RegisterScreen.styled";
 
 type RegisterNav = NativeStackNavigationProp<RootStackParamList, "Register">;
 
 export function RegisterScreen() {
   const navigation = useNavigation<RegisterNav>();
+  const theme = useTheme();
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -71,7 +83,7 @@ export function RegisterScreen() {
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={{ flex: 1, padding: 24, justifyContent: "center" }}>
+          <Container>
             <Text
               variant="displaySmall"
               style={{ marginBottom: 8, textAlign: "center" }}
@@ -83,50 +95,49 @@ export function RegisterScreen() {
               style={{
                 marginBottom: 32,
                 textAlign: "center",
-                color: "#666",
+                color: theme.colors.onSurfaceVariant,
               }}
             >
               Tạo tài khoản mới để bắt đầu
             </Text>
 
-            <Card style={{ padding: 16 }}>
-              <Card.Content>
-                <TextInput
+            <FormCard>
+              <Field>
+                <AppTextInput
                   label="Họ và tên"
                   value={fullName}
                   onChangeText={setFullName}
-                  mode="outlined"
                   autoCapitalize="words"
                   autoCorrect={false}
-                  style={{ marginBottom: 16 }}
                 />
+              </Field>
 
-                <TextInput
+              <Field>
+                <AppTextInput
                   label="Tên đăng nhập"
                   value={username}
                   onChangeText={setUsername}
-                  mode="outlined"
                   autoCapitalize="none"
                   autoCorrect={false}
-                  style={{ marginBottom: 16 }}
                 />
+              </Field>
 
-                <TextInput
+              <Field>
+                <AppTextInput
                   label="Email"
                   value={email}
                   onChangeText={setEmail}
-                  mode="outlined"
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
-                  style={{ marginBottom: 16 }}
                 />
+              </Field>
 
-                <TextInput
+              <Field>
+                <AppTextInput
                   label="Mật khẩu"
                   value={password}
                   onChangeText={setPassword}
-                  mode="outlined"
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   right={
@@ -135,14 +146,14 @@ export function RegisterScreen() {
                       onPress={() => setShowPassword(!showPassword)}
                     />
                   }
-                  style={{ marginBottom: 16 }}
                 />
+              </Field>
 
-                <TextInput
+              <Field>
+                <AppTextInput
                   label="Xác nhận mật khẩu"
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
-                  mode="outlined"
                   secureTextEntry={!showConfirmPassword}
                   autoCapitalize="none"
                   right={
@@ -153,67 +164,49 @@ export function RegisterScreen() {
                       }
                     />
                   }
-                  style={{ marginBottom: 16 }}
                 />
+              </Field>
 
-                <Button
+              <SubmitWrap>
+                <AppButton
                   mode="contained"
                   onPress={handleRegister}
                   loading={loading}
                   disabled={loading}
-                  style={{ marginTop: 8, marginBottom: 16 }}
-                  contentStyle={{ paddingVertical: 8 }}
                 >
                   Đăng Ký
-                </Button>
+                </AppButton>
+              </SubmitWrap>
 
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginVertical: 24,
-                  }}
-                >
-                  <View
-                    style={{
-                      flex: 1,
-                      height: 1,
-                      backgroundColor: "#e0e0e0",
-                    }}
-                  />
-                  <Text style={{ marginHorizontal: 16, color: "#999" }}>
-                    hoặc
-                  </Text>
-                  <View
-                    style={{
-                      flex: 1,
-                      height: 1,
-                      backgroundColor: "#e0e0e0",
-                    }}
-                  />
-                </View>
+              <DividerRow>
+                <DividerLine $color={theme.colors.outline} />
+                <Text style={{ marginHorizontal: 16, color: theme.colors.onSurfaceVariant }}>
+                  hoặc
+                </Text>
+                <DividerLine $color={theme.colors.outline} />
+              </DividerRow>
 
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
+              <BottomRow>
+                <Text
+                  variant="bodyMedium"
+                  style={{ color: theme.colors.onSurfaceVariant }}
                 >
-                  <Text variant="bodyMedium" style={{ color: "#666" }}>
-                    Đã có tài khoản?{" "}
-                  </Text>
-                  <Button
-                    mode="text"
-                    compact
-                    onPress={() => navigation.navigate("Login")}
-                  >
-                    Đăng nhập
-                  </Button>
-                </View>
-              </Card.Content>
-            </Card>
-          </View>
+                  Đã có tài khoản?{" "}
+                </Text>
+                <AppButton
+                  mode="text"
+                  compact
+                  onPress={() => navigation.navigate("Login")}
+                  contentStyle={{ paddingVertical: 0 }}
+                >
+                  Đăng nhập
+                </AppButton>
+              </BottomRow>
+            </FormCard>
+          </Container>
         </ScrollView>
       </Surface>
-    </KeyboardAvoidPatch assistant to=functions.ApplyPatch હેઠ_json Assistant to=functions.ApplyPatchанных to=functions.ApplyPatchателем to=functions.ApplyPatch ***!
+    </KeyboardAvoidingView>
+  );
+}
+

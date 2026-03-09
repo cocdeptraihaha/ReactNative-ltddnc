@@ -1,5 +1,6 @@
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import { Appbar, Divider, Menu, Text, useTheme } from "react-native-paper";
+import styled from "styled-components/native";
 
 export type HomeHeaderProps = {
   title?: string;
@@ -25,7 +26,7 @@ export function HomeHeader({
       elevated
       theme={{ colors: { primaryContainer: theme.colors.primaryContainer } }}
     >
-      <Appbar.Content title={title} titleStyle={styles.title} />
+      <Appbar.Content title={title} titleStyle={titleStyle} />
 
       <Menu
         visible={menuVisible}
@@ -33,9 +34,9 @@ export function HomeHeader({
         anchor={<Appbar.Action icon="account-circle" onPress={onMenuOpen} />}
         anchorPosition="top"
       >
-        <View style={styles.menuUser}>
+        <MenuUser>
           <Text variant="labelLarge">{userDisplayName ?? "Account"}</Text>
-        </View>
+        </MenuUser>
         <Divider />
         <Menu.Item onPress={onLogout} title="Logout" leadingIcon="logout" />
       </Menu>
@@ -43,14 +44,9 @@ export function HomeHeader({
   );
 }
 
-const styles = StyleSheet.create({
-  title: {
-    fontWeight: "700",
-    fontSize: 20,
-  },
-  menuUser: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-});
+const titleStyle = { fontWeight: "700" as const, fontSize: 20 };
+
+const MenuUser = styled(View)`
+  padding: 12px 16px;
+`;
 
