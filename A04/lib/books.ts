@@ -36,19 +36,31 @@ export type Page<T> = {
   pages: number;
 };
 
+const booksCache = new Map<string, Page<Book>>();
+
 export async function getBooks(params: {
   page?: number;
   size?: number;
   q?: string;
 }): Promise<Page<Book>> {
+  const page = params.page ?? 1;
+  const size = params.size ?? 10;
+  const q = (params.q ?? "").trim().toLowerCase();
+
+  const cacheKey = `${page}:${size}:${q}`;
+  const cached = booksCache.get(cacheKey);
+  if (cached) return cached;
+
   const search = new URLSearchParams();
-  if (params.page) search.set("page", String(params.page));
-  if (params.size) search.set("size", String(params.size));
-  if (params.q && params.q.trim()) search.set("q", params.q.trim());
+  if (page) search.set("page", String(page));
+  if (size) search.set("size", String(size));
+  if (q) search.set("q", q);
 
   const query = search.toString();
   const path = `/books/${query ? `?${query}` : ""}`;
-  return apiFetch<Page<Book>>(path);
+  const data = await apiFetch<Page<Book>>(path);
+  booksCache.set(cacheKey, data);
+  return data;
 }
 
 export async function getBook(id: number): Promise<BookWithDetail> {
