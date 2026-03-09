@@ -12,15 +12,6 @@ import { AppButton } from "../components/AppButton";
 import { getBooks, type Book, type Page } from "../lib/books";
 import { getCategories, type Category } from "../lib/categories";
 import { formatDateVN } from "../utils/date";
-import {
-  CardTitleWrap,
-  CardWrap,
-  Centered,
-  Container,
-  InfoRowWrap,
-  LabelWrap,
-} from "./styled/HomeScreen.styled";
-
 type HomeNav = NativeStackNavigationProp<RootStackParamList, "Home">;
 
 export function HomeScreen() {
@@ -40,16 +31,16 @@ export function HomeScreen() {
   function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
     if (value === undefined || value === null || value === "") return null;
     return (
-      <InfoRowWrap>
-        <LabelWrap>
+      <View style={{ marginBottom: 12 }}>
+        <View style={{ marginBottom: 2 }}>
           <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
             {label}
           </Text>
-        </LabelWrap>
+        </View>
         <Text variant="bodyMedium" style={{ color: theme.colors.onSurface }}>
           {String(value)}
         </Text>
-      </InfoRowWrap>
+      </View>
     );
   }
 
@@ -88,12 +79,12 @@ export function HomeScreen() {
   if (!isReady || !token) {
     return (
       <Surface style={{ flex: 1 }}>
-        <Centered>
-        <ActivityIndicator size="large" />
-        <Text variant="bodyLarge" style={{ marginTop: 12 }}>
-          Loading...
-        </Text>
-        </Centered>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <ActivityIndicator size="large" />
+          <Text variant="bodyLarge" style={{ marginTop: 12 }}>
+            Loading...
+          </Text>
+        </View>
       </Surface>
     );
   }
@@ -136,14 +127,24 @@ export function HomeScreen() {
         onLogout={handleLogout}
       />
 
-      <ScrollView style={{ flex: 1 }}>
-        <CardWrap>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingVertical: 16,
+          alignItems: "center",
+        }}
+      >
+        <View style={{ width: "100%", maxWidth: 720 }}>
           <FormCard>
-            <CardTitleWrap>
-              <Text variant="titleMedium" style={{ fontWeight: "700", color: theme.colors.onSurface }}>
+            <View style={{ marginBottom: 16 }}>
+              <Text
+                variant="titleMedium"
+                style={{ fontWeight: "700", color: theme.colors.onSurface }}
+              >
                 Books
               </Text>
-            </CardTitleWrap>
+            </View>
             <InfoRow label="Welcome" value={user?.full_name ?? user?.email ?? null} />
 
             {categories.length > 0 && (
@@ -286,7 +287,7 @@ export function HomeScreen() {
             )}
 
           </FormCard>
-        </CardWrap>
+        </View>
       </ScrollView>
     </Surface>
   );

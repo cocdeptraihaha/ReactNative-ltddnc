@@ -10,14 +10,6 @@ import { getBook, type BookWithDetail } from "../lib/books";
 import { formatDateVN } from "../utils/date";
 import { FormCard } from "../components/FormCard";
 import { HomeHeader } from "../components/HomeHeader";
-import {
-  CardTitleWrap,
-  CardWrap,
-  Centered,
-  Container,
-  InfoRowWrap,
-  LabelWrap,
-} from "./styled/HomeScreen.styled";
 
 type BookDetailNav = NativeStackNavigationProp<RootStackParamList, "BookDetail">;
 type BookDetailRoute = RouteProp<RootStackParamList, "BookDetail">;
@@ -35,16 +27,16 @@ export function BookDetailScreen() {
   function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
     if (value === undefined || value === null || value === "") return null;
     return (
-      <InfoRowWrap>
-        <LabelWrap>
+      <View style={{ marginBottom: 12 }}>
+        <View style={{ marginBottom: 2 }}>
           <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
             {label}
           </Text>
-        </LabelWrap>
+        </View>
         <Text variant="bodyMedium" style={{ color: theme.colors.onSurface }}>
           {String(value)}
         </Text>
-      </InfoRowWrap>
+      </View>
     );
   }
 
@@ -70,12 +62,12 @@ export function BookDetailScreen() {
   if (loading && !book) {
     return (
       <Surface style={{ flex: 1 }}>
-        <Centered>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <ActivityIndicator size="large" />
           <Text variant="bodyLarge" style={{ marginTop: 12 }}>
             Loading book...
           </Text>
-        </Centered>
+        </View>
       </Surface>
     );
   }
@@ -83,11 +75,11 @@ export function BookDetailScreen() {
   if (error || !book) {
     return (
       <Surface style={{ flex: 1 }}>
-        <Centered>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <Text variant="bodyLarge" style={{ color: theme.colors.error, marginBottom: 8 }}>
             {error ?? "Book not found"}
           </Text>
-        </Centered>
+        </View>
       </Surface>
     );
   }
@@ -106,33 +98,44 @@ export function BookDetailScreen() {
         onLogout={handleBack}
       />
 
-      <ScrollView style={{ flex: 1 }}>
-        <Container>
-          <CardWrap>
-            <FormCard>
-              <CardTitleWrap>
-                <Text
-                  variant="titleMedium"
-                  style={{ fontWeight: "700", color: theme.colors.onSurface }}
-                >
-                  {book.title ?? "Untitled book"}
-                </Text>
-              </CardTitleWrap>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingVertical: 16,
+          alignItems: "center",
+        }}
+      >
+        <View style={{ width: "100%", maxWidth: 720 }}>
+          <FormCard>
+            <View style={{ marginBottom: 16 }}>
+              <Text
+                variant="titleMedium"
+                style={{ fontWeight: "700", color: theme.colors.onSurface }}
+              >
+                {book.title ?? "Untitled book"}
+              </Text>
+            </View>
 
-              {d?.image_url && (
-                <View style={{ marginBottom: 16, alignItems: "center" }}>
-                  <Image
-                    source={{ uri: d.image_url }}
-                    style={{
-                      width: "100%",
-                      height: 220,
-                      borderRadius: 12,
-                      backgroundColor: theme.colors.surface,
-                    }}
-                    contentFit="cover"
-                  />
-                </View>
-              )}
+            {d?.image_url && (
+              <View
+                style={{
+                  marginBottom: 16,
+                  borderRadius: 16,
+                  overflow: "hidden",
+                  backgroundColor: theme.colors.surfaceVariant,
+                }}
+              >
+                <Image
+                  source={{ uri: d.image_url }}
+                  style={{
+                    width: "100%",
+                    height: 240,
+                  }}
+                  contentFit="cover"
+                />
+              </View>
+            )}
 
               <InfoRow label="Author" value={book.author} />
               <InfoRow
@@ -153,23 +156,22 @@ export function BookDetailScreen() {
                     : null
                 }
               />
-              <InfoRow label="Stock quantity" value={book.stock_quantity} />
+            <InfoRow label="Stock quantity" value={book.stock_quantity} />
 
-              {d && (
-                <>
-                  <InfoRow label="Description" value={d.description} />
-                  <InfoRow label="Pages" value={d.pages} />
-                  <InfoRow label="Publisher" value={d.publisher} />
-                  <InfoRow label="Supplier" value={d.supplier} />
-                  <InfoRow label="Height (cm)" value={d.height} />
-                  <InfoRow label="Width (cm)" value={d.width} />
-                  <InfoRow label="Length (cm)" value={d.length} />
-                  <InfoRow label="Weight (kg)" value={d.weight} />
-                </>
-              )}
-            </FormCard>
-          </CardWrap>
-        </Container>
+            {d && (
+              <>
+                <InfoRow label="Description" value={d.description} />
+                <InfoRow label="Pages" value={d.pages} />
+                <InfoRow label="Publisher" value={d.publisher} />
+                <InfoRow label="Supplier" value={d.supplier} />
+                <InfoRow label="Height (cm)" value={d.height} />
+                <InfoRow label="Width (cm)" value={d.width} />
+                <InfoRow label="Length (cm)" value={d.length} />
+                <InfoRow label="Weight (kg)" value={d.weight} />
+              </>
+            )}
+          </FormCard>
+        </View>
       </ScrollView>
     </Surface>
   );
