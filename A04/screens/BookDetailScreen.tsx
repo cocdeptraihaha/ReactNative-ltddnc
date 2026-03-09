@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
+import { Image } from "expo-image";
 import { ActivityIndicator, Surface, Text, useTheme } from "react-native-paper";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -118,6 +119,21 @@ export function BookDetailScreen() {
                 </Text>
               </CardTitleWrap>
 
+              {d?.image_url && (
+                <View style={{ marginBottom: 16, alignItems: "center" }}>
+                  <Image
+                    source={{ uri: d.image_url }}
+                    style={{
+                      width: "100%",
+                      height: 220,
+                      borderRadius: 12,
+                      backgroundColor: theme.colors.surface,
+                    }}
+                    contentFit="cover"
+                  />
+                </View>
+              )}
+
               <InfoRow label="Author" value={book.author} />
               <InfoRow
                 label="Price"
@@ -149,7 +165,6 @@ export function BookDetailScreen() {
                   <InfoRow label="Width (cm)" value={d.width} />
                   <InfoRow label="Length (cm)" value={d.length} />
                   <InfoRow label="Weight (kg)" value={d.weight} />
-                  <InfoRow label="Image URL" value={d.image_url} />
                 </>
               )}
             </FormCard>
