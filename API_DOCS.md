@@ -11,6 +11,155 @@ Base URL: `http://localhost:8000/api/v1`
 
 ---
 
+## Danh sách API theo nhóm chức năng
+
+> Tất cả route dưới đây đều tồn tại trong codebase. Base: `http://localhost:8000/api/v1` (trừ Health Check ở root).
+
+### 1. Xác thực (`/auth`)
+| Method | Path | Auth |
+|--------|------|------|
+| POST | `/auth/register` | Public |
+| POST | `/auth/verify-otp` | Public |
+| POST | `/auth/resend-otp` | Public |
+| POST | `/auth/login` | Public |
+| POST | `/auth/forgot-password` | Public |
+| POST | `/auth/reset-password` | Public |
+
+### 2. Người dùng (`/users`)
+| Method | Path | Auth |
+|--------|------|------|
+| GET | `/users/me` | User |
+| GET | `/users/{user_id}` | User |
+| PATCH | `/users/{user_id}` | User |
+| DELETE | `/users/{user_id}` | User |
+
+### 3. Sách (`/books`)
+| Method | Path | Auth |
+|--------|------|------|
+| GET | `/books/` | Public |
+| GET | `/books/{book_id}` | Public |
+| POST | `/books/` | Admin |
+| PATCH | `/books/{book_id}` | Admin |
+
+### 4. Book Details (`/book-details`)
+| Method | Path | Auth |
+|--------|------|------|
+| GET | `/book-details/` | Admin |
+| GET | `/book-details/{detail_id}` | Admin |
+| POST | `/book-details/` | Admin |
+| PATCH | `/book-details/{detail_id}` | Admin |
+
+### 5. Danh mục (`/categories`)
+| Method | Path | Auth |
+|--------|------|------|
+| GET | `/categories/` | Public |
+| GET | `/categories/roots` | Public |
+| GET | `/categories/{category_id}` | Public |
+| POST | `/categories/` | Admin |
+| PATCH | `/categories/{category_id}` | Admin |
+
+### 6. Upload ảnh (`/upload`)
+| Method | Path | Auth | Mô tả |
+|--------|------|------|--------|
+| POST | `/upload/image` | User | Upload ảnh lên Cloudinary, trả về URL (query: `folder`, mặc định `kebook`) |
+| POST | `/upload/avatar` | User | Upload ảnh lên Cloudinary và lưu URL vào `user.avatar_url` (DB) |
+| POST | `/upload/book-detail/{detail_id}/image` | Admin | Upload ảnh lên Cloudinary và lưu URL vào `book_details.image_url` (DB) |
+
+- Content-Type: `multipart/form-data`, field `file`. Cho phép: JPEG, PNG, GIF, WebP; tối đa 5MB.
+- Cần biến môi trường `CLOUDINARY_URL` (format: `cloudinary://api_key:api_secret@cloud_name`).
+
+Response mẫu:
+
+`/upload/image`
+
+```json
+{ "url": "https://res.cloudinary.com/<cloud>/image/upload/..." }
+```
+
+`/upload/avatar`
+
+```json
+{ "url": "https://res.cloudinary.com/<cloud>/image/upload/...", "avatar_url": "https://res.cloudinary.com/<cloud>/image/upload/..." }
+```
+
+`/upload/book-detail/{detail_id}/image`
+
+```json
+{ "url": "https://res.cloudinary.com/<cloud>/image/upload/...", "image_url": "https://res.cloudinary.com/<cloud>/image/upload/...", "detail_id": 123 }
+```
+
+### 7. Giỏ hàng (`/cart`)
+| Method | Path | Auth |
+|--------|------|------|
+| GET | `/cart/` | User |
+| POST | `/cart/` | User |
+| PATCH | `/cart/{cart_id}` | User |
+| DELETE | `/cart/{cart_id}` | User |
+
+### 8. Đơn hàng (`/orders`)
+| Method | Path | Auth |
+|--------|------|------|
+| GET | `/orders/` | User |
+| GET | `/orders/{order_id}` | User |
+| POST | `/orders/checkout` | User |
+| POST | `/orders/` | User |
+| PATCH | `/orders/{order_id}/status` | Admin |
+
+### 9. Đánh giá (`/reviews`)
+| Method | Path | Auth |
+|--------|------|------|
+| GET | `/reviews/book/{book_id}` | Public |
+| GET | `/reviews/book/{book_id}/avg` | Public |
+| POST | `/reviews/` | User |
+| PATCH | `/reviews/{review_id}` | User |
+| DELETE | `/reviews/{review_id}` | User |
+
+### 10. Khuyến mãi (`/promotions`)
+| Method | Path | Auth |
+|--------|------|------|
+| GET | `/promotions/validate` | Public |
+| GET | `/promotions/` | Admin |
+| POST | `/promotions/` | Admin |
+| PATCH | `/promotions/{promo_id}` | Admin |
+
+### 11. Yêu cầu trả hàng (`/return-requests`)
+| Method | Path | Auth |
+|--------|------|------|
+| GET | `/return-requests/` | User |
+| POST | `/return-requests/` | User |
+| PATCH | `/return-requests/{req_id}/process` | Admin |
+
+### 12. Thông báo (`/notifications`)
+| Method | Path | Auth |
+|--------|------|------|
+| GET | `/notifications/me` | User |
+| POST | `/notifications/{notification_id}/read` | User |
+| GET | `/notifications/` | Admin |
+| POST | `/notifications/` | Admin |
+
+### 13. Hỗ trợ (`/support-requests`)
+| Method | Path | Auth |
+|--------|------|------|
+| POST | `/support-requests/` | User |
+| GET | `/support-requests/` | Admin |
+| PATCH | `/support-requests/{req_id}` | Admin |
+
+### 14. Test (`/test`) – Chỉ khi TESTING=1
+| Method | Path | Auth |
+|--------|------|------|
+| GET | `/test/otp` | Public |
+| POST | `/test/make-admin` | Public |
+| POST | `/test/books` | Public |
+
+### 15. Health Check (root, không thuộc /api/v1)
+| Method | Path | Auth |
+|--------|------|------|
+| GET | `/` | Public |
+| GET | `/kaithhealthcheck` | Public |
+| GET | `/kaithheathcheck` | Public |
+
+---
+
 ## 1. Auth (`/auth`)
 
 | Method | Path | Auth | Description |
@@ -146,7 +295,6 @@ Error 400: `{ "detail": "Account not activated. Please check your email for the 
 
 | Method | Path | Auth | Description |
 |--------|------|------|--------------|
-| POST | `/` | Public | Register (alternative to /auth/register) |
 | GET | `/me` | User | Current user info |
 | GET | `/{user_id}` | User | User detail by ID |
 | PATCH | `/{user_id}` | User | Update (own profile only) |
@@ -159,9 +307,48 @@ Error 400: `{ "detail": "Account not activated. Please check your email for the 
 | Method | Path | Auth | Description |
 |--------|------|------|--------------|
 | GET | `/` | Public | List books (paginated) |
-| GET | `/{book_id}` | Public | Book detail |
+| GET | `/{book_id}` | Public | Book detail (with nested book_detail) |
 | POST | `/` | Admin | Create book |
 | PATCH | `/{book_id}` | Admin | Update book |
+
+### POST `/books/` (Admin) – Frontend flow
+
+**Option A: Create book + book_detail in one call**
+```json
+{
+  "title": "Book Title",
+  "author": "Author Name",
+  "selling_price": 100000,
+  "stock_quantity": 10,
+  "code": "ISBN123",
+  "edition": 1,
+  "publication_date": "2024-01-01",
+  "book_detail": {
+    "description": "Book description",
+    "image_url": "https://...",
+    "pages": 200,
+    "publisher": "Publisher Name",
+    "height": 20.5,
+    "width": 14.0,
+    "weight": 0.3
+  }
+}
+```
+
+**Option B: Create book_detail first, then book**
+1. `POST /book-details` → get `{ "id": 1, ... }`
+2. `POST /books` with `book_detail_id: 1`
+
+**Option C: Book without detail**
+```json
+{
+  "title": "Book Title",
+  "author": "Author",
+  "selling_price": 50000,
+  "stock_quantity": 5,
+  "book_detail_id": null
+}
+```
 
 ### GET `/books/` (paginated)
 Query: `?page=1&size=50&q=keyword`
@@ -193,6 +380,33 @@ Response:
   "book_detail_id": null
 }
 ```
+
+---
+
+## 3b. Book Details (`/book-details`)
+
+| Method | Path | Auth | Description |
+|--------|------|------|--------------|
+| GET | `/` | Admin | List book details |
+| GET | `/{detail_id}` | Admin | Book detail by ID |
+| POST | `/` | Admin | Create book detail |
+| PATCH | `/{detail_id}` | Admin | Update book detail |
+
+### POST `/book-details/` (Admin)
+```json
+{
+  "description": "Book description",
+  "image_url": "https://example.com/cover.jpg",
+  "pages": 200,
+  "publisher": "Publisher Name",
+  "height": 20.5,
+  "length": 25.0,
+  "width": 14.0,
+  "weight": 0.3,
+  "supplier": "Supplier Name"
+}
+```
+Response: `{ "id": 1, "description": "...", ... }` – use `id` for `book_detail_id` when creating book.
 
 ---
 
