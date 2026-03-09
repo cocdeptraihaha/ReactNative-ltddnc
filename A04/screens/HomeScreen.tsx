@@ -27,8 +27,8 @@ export function HomeScreen() {
   const navigation = useNavigation<HomeNav>();
   const { user, token, isReady, logout } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [size] = useState(10);
   const [booksPage, setBooksPage] = useState<Page<Book> | null>(null);
@@ -58,19 +58,11 @@ export function HomeScreen() {
   }, [isReady, token, navigation]);
 
   useEffect(() => {
-    const handle = setTimeout(() => {
-      setPage(1);
-      setDebouncedSearch(search);
-    }, 300);
-    return () => clearTimeout(handle);
-  }, [search]);
-
-  useEffect(() => {
     (async () => {
       try {
         setLoadingBooks(true);
         setError(null);
-        const data = await getBooks({ page, size, q: debouncedSearch });
+        const data = await getBooks({ page, size, q: searchQuery });
         setBooksPage(data);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load books");
@@ -78,7 +70,7 @@ export function HomeScreen() {
         setLoadingBooks(false);
       }
     })();
-  }, [page, size, debouncedSearch]);
+  }, [page, size, searchQuery]);
 
   if (!isReady || !token) {
     return (
@@ -102,6 +94,11 @@ export function HomeScreen() {
   const handleProfile = () => {
     setMenuVisible(false);
     navigation.navigate("Profile");
+  };
+
+  const handleSearch = () => {
+    setPage(1);
+    setSearchQuery(searchInput.trim());
   };
 
   const handlePrevPage = () => {
@@ -138,8 +135,9 @@ export function HomeScreen() {
 
             <AppTextInput
               label="Search by title or author"
-              value={search}
-              onChangeText={setSearch}
+              value={searchInput}
+              onChangeText={setSearchInput}
+              onSubmitEditing={handleSearch}
               editable={!loadingBooks}
               mb={8}
               returnKeyType="search"
