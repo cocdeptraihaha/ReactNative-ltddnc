@@ -1,0 +1,14 @@
+{
+  "name": "reactnative-ltddnc",
+  "private": true,
+  "workspaces": [
+    "A02",
+    "A03",
+    "BTTuan01"
+  ],
+  "scripts": {
+    "a02": "npm run start -w a02",
+    "a03": "npm run start -w a03",
+    "bttuan01": "npm run start -w bttuan01"
+  }
+}
