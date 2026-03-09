@@ -1,18 +1,16 @@
 import { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
-import {
-  ActivityIndicator,
-  Surface,
-  Text,
-  useTheme,
-} from "react-native-paper";
+import { ActivityIndicator, Surface, Text, useTheme } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootStack";
 import { useAuth } from "../context/AuthContext";
 import { HomeHeader } from "../components/HomeHeader";
 import { FormCard } from "../components/FormCard";
-import { formatDateVN, parseYmdToDate } from "../utils/date";
+import { AppTextInput } from "../components/AppTextInput";
+import { AppButton } from "../components/AppButton";
+import { getBooks, type Book, type Page } from "../lib/books";
+import { formatDateVN } from "../utils/date";
 import {
   CardTitleWrap,
   CardWrap,
@@ -29,6 +27,12 @@ export function HomeScreen() {
   const navigation = useNavigation<HomeNav>();
   const { user, token, isReady, logout } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [size] = useState(10);
+  const [booksPage, setBooksPage] = useState<Page<Book> | null>(null);
+  const [loadingBooks, setLoadingBooks] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
     if (value === undefined || value === null || value === "") return null;
@@ -51,6 +55,21 @@ export function HomeScreen() {
       navigation.replace("Welcome");
     }
   }, [isReady, token, navigation]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoadingBooks(true);
+        setError(null);
+        const data = await getBooks({ page, size, q: search });
+        setBooksPage(data);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to load books");
+      } finally {
+        setLoadingBooks(false);
+      }
+    })();
+  }, [page, size, search]);
 
   if (!isReady || !token) {
     return (
@@ -76,10 +95,24 @@ export function HomeScreen() {
     navigation.navigate("Profile");
   };
 
+  const handleSearchSubmit = () => {
+    setPage(1);
+  };
+
+  const handlePrevPage = () => {
+    setPage((p) => Math.max(1, p - 1));
+  };
+
+  const handleNextPage = () => {
+    if (booksPage && page < booksPage.pages) {
+      setPage((p) => p + 1);
+    }
+  };
+
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <HomeHeader
-        title="KeBook"
+        title="KeBook – Books"
         userDisplayName={user?.full_name ?? user?.email ?? undefined}
         menuVisible={menuVisible}
         onMenuDismiss={() => setMenuVisible(false)}
@@ -93,36 +126,111 @@ export function HomeScreen() {
           <FormCard>
             <CardTitleWrap>
               <Text variant="titleMedium" style={{ fontWeight: "700", color: theme.colors.onSurface }}>
-                Account information
+                Books
               </Text>
             </CardTitleWrap>
+            <InfoRow label="Welcome" value={user?.full_name ?? user?.email ?? null} />
 
-            <InfoRow label="ID" value={user?.id} />
-            <InfoRow label="Full name" value={user?.full_name} />
-            <InfoRow label="Username" value={user?.username ?? null} />
-            <InfoRow label="Email" value={user?.email} />
-            <InfoRow label="Phone" value={user?.phone_number ?? null} />
-            <InfoRow label="Gender" value={user?.gender ?? null} />
-            <InfoRow
-              label="Date of birth"
-              value={
-                user?.date_of_birth instanceof Date
-                  ? formatDateVN(user.date_of_birth)
-                  : formatDateVN(parseYmdToDate(user?.date_of_birth ?? null))
-              }
+            <AppTextInput
+              label="Search by title or author"
+              value={search}
+              onChangeText={setSearch}
+              onSubmitEditing={handleSearchSubmit}
+              editable={!loadingBooks}
+              mb={8}
+              returnKeyType="search"
             />
-            <InfoRow label="Address" value={user?.address ?? null} />
-            <InfoRow
-              label="Status"
-              value={
-                user?.is_active === true
-                  ? "Active"
-                  : user?.is_active === false
-                    ? "Inactive"
-                    : undefined
-              }
-            />
-            <InfoRow label="Vai trò" value={user?.is_superuser === true ? "Admin" : "User"} />
+
+            {loadingBooks && (
+              <View style={{ marginVertical: 8, alignItems: "center" }}>
+                <ActivityIndicator />
+              </View>
+            )}
+
+            {error && (
+              <Text
+                variant="bodySmall"
+                style={{ color: theme.colors.error, marginBottom: 8 }}
+              >
+                {error}
+              </Text>
+            )}
+
+            {booksPage?.items.map((b) => (
+              <View
+                key={b.id}
+                style={{
+                  paddingVertical: 8,
+                  borderBottomWidth: 1,
+                  borderBottomColor: theme.colors.outlineVariant,
+                }}
+              >
+                <Text
+                  variant="titleMedium"
+                  style={{ fontWeight: "600", color: theme.colors.onSurface }}
+                >
+                  {b.title ?? "Untitled book"}
+                </Text>
+                {b.author && (
+                  <Text
+                    variant="bodyMedium"
+                    style={{ color: theme.colors.onSurfaceVariant }}
+                  >
+                    {b.author}
+                  </Text>
+                )}
+                {b.selling_price != null && (
+                  <Text
+                    variant="bodyMedium"
+                    style={{ color: theme.colors.primary, marginTop: 2 }}
+                  >
+                    {b.selling_price.toLocaleString("vi-VN")} đ
+                  </Text>
+                )}
+                {b.publication_date && (
+                  <Text
+                    variant="bodySmall"
+                    style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
+                  >
+                    Published: {formatDateVN(new Date(b.publication_date))}
+                  </Text>
+                )}
+              </View>
+            ))}
+
+            {booksPage && (
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginTop: 12,
+                }}
+              >
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  Page {booksPage.page} / {booksPage.pages} • {booksPage.total} books
+                </Text>
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  <AppButton
+                    mode="outlined"
+                    onPress={handlePrevPage}
+                    disabled={booksPage.page <= 1 || loadingBooks}
+                    style={{ marginRight: 4 }}
+                  >
+                    Prev
+                  </AppButton>
+                  <AppButton
+                    mode="outlined"
+                    onPress={handleNextPage}
+                    disabled={
+                      loadingBooks || booksPage.page >= booksPage.pages
+                    }
+                  >
+                    Next
+                  </AppButton>
+                </View>
+              </View>
+            )}
 
           </FormCard>
         </CardWrap>
