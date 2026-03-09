@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { ActivityIndicator, Surface, Text, useTheme } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
@@ -27,13 +27,13 @@ export function HomeScreen() {
   const navigation = useNavigation<HomeNav>();
   const { user, token, isReady, logout } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
-  const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [size] = useState(10);
   const [booksPage, setBooksPage] = useState<Page<Book> | null>(null);
   const [loadingBooks, setLoadingBooks] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const searchInputRef = useRef("");
 
   function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
     if (value === undefined || value === null || value === "") return null;
@@ -98,7 +98,7 @@ export function HomeScreen() {
 
   const handleSearch = () => {
     setPage(1);
-    setSearchQuery(searchInput.trim());
+    setSearchQuery(searchInputRef.current.trim());
   };
 
   const handlePrevPage = () => {
@@ -135,8 +135,10 @@ export function HomeScreen() {
 
             <AppTextInput
               label="Search by title or author"
-              value={searchInput}
-              onChangeText={setSearchInput}
+              defaultValue=""
+              onChangeText={(text) => {
+                searchInputRef.current = text;
+              }}
               onSubmitEditing={handleSearch}
               editable={!loadingBooks}
               mb={8}
