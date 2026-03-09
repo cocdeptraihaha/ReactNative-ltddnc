@@ -7,12 +7,21 @@ import {
   Alert,
 } from "react-native";
 import { Text, TextInput, Button, Card, Surface } from "react-native-paper";
-import { Link, router, useLocalSearchParams } from "expo-router";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../navigation/RootStack";
 import * as authApi from "../lib/auth";
 
-export default function ResetPasswordScreen() {
-  const params = useLocalSearchParams<{ email: string }>();
-  const email = params.email ?? "";
+type ResetNav = NativeStackNavigationProp<
+  RootStackParamList,
+  "ResetPassword"
+>;
+type ResetRoute = RouteProp<RootStackParamList, "ResetPassword">;
+
+export function ResetPasswordScreen() {
+  const navigation = useNavigation<ResetNav>();
+  const route = useRoute<ResetRoute>();
+  const email = route.params?.email ?? "";
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -36,10 +45,16 @@ export default function ResetPasswordScreen() {
     setLoading(true);
     try {
       await authApi.resetPassword(email, otp.trim(), newPassword);
-      Alert.alert("Thành công", "Đổi mật khẩu thành công. Vui lòng đăng nhập lại.");
-      router.replace("/login");
+      Alert.alert(
+        "Thành công",
+        "Đổi mật khẩu thành công. Vui lòng đăng nhập lại.",
+      );
+      navigation.replace("Login");
     } catch (e) {
-      Alert.alert("Lỗi", e instanceof Error ? e.message : "Không thể đặt lại mật khẩu");
+      Alert.alert(
+        "Lỗi",
+        e instanceof Error ? e.message : "Không thể đặt lại mật khẩu",
+      );
     } finally {
       setLoading(false);
     }
@@ -47,13 +62,26 @@ export default function ResetPasswordScreen() {
 
   if (!email) {
     return (
-      <Surface style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 24 }}>
-        <Text variant="bodyLarge" style={{ marginBottom: 16, textAlign: "center" }}>
+      <Surface
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 24,
+        }}
+      >
+        <Text
+          variant="bodyLarge"
+          style={{ marginBottom: 16, textAlign: "center" }}
+        >
           Thiếu thông tin email. Vui lòng thực hiện quên mật khẩu trước.
         </Text>
-        <Link href="/forgot-password" asChild>
-          <Button mode="contained">Quên mật khẩu</Button>
-        </Link>
+        <Button
+          mode="contained"
+          onPress={() => navigation.navigate("ForgotPassword")}
+        >
+          Quên mật khẩu
+        </Button>
       </Surface>
     );
   }
@@ -64,12 +92,25 @@ export default function ResetPasswordScreen() {
       style={{ flex: 1 }}
     >
       <Surface style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={{ flex: 1, padding: 24, justifyContent: "center" }}>
-            <Text variant="displaySmall" style={{ marginBottom: 8, textAlign: "center" }}>
+            <Text
+              variant="displaySmall"
+              style={{ marginBottom: 8, textAlign: "center" }}
+            >
               Đặt lại mật khẩu
             </Text>
-            <Text variant="bodyLarge" style={{ marginBottom: 32, textAlign: "center", color: "#666" }}>
+            <Text
+              variant="bodyLarge"
+              style={{
+                marginBottom: 32,
+                textAlign: "center",
+                color: "#666",
+              }}
+            >
               Nhập mã OTP và mật khẩu mới
             </Text>
 
@@ -126,12 +167,21 @@ export default function ResetPasswordScreen() {
                   Đặt lại mật khẩu
                 </Button>
 
-                <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", marginTop: 24 }}>
-                  <Link href="/login" asChild>
-                    <Button mode="text" compact>
-                      Quay lại đăng nhập
-                    </Button>
-                  </Link>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginTop: 24,
+                  }}
+                >
+                  <Button
+                    mode="text"
+                    compact
+                    onPress={() => navigation.navigate("Login")}
+                  >
+                    Quay lại đăng nhập
+                  </Button>
                 </View>
               </Card.Content>
             </Card>
@@ -141,3 +191,4 @@ export default function ResetPasswordScreen() {
     </KeyboardAvoidingView>
   );
 }
+

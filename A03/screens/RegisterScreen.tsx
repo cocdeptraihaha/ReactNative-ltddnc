@@ -1,4 +1,6 @@
-import { Link, router } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../navigation/RootStack";
 import React, { useState } from "react";
 import {
   Alert,
@@ -10,7 +12,10 @@ import {
 import { Button, Card, Surface, Text, TextInput } from "react-native-paper";
 import * as authApi from "../lib/auth";
 
-export default function RegisterScreen() {
+type RegisterNav = NativeStackNavigationProp<RootStackParamList, "Register">;
+
+export function RegisterScreen() {
+  const navigation = useNavigation<RegisterNav>();
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -46,9 +51,9 @@ export default function RegisterScreen() {
       });
       Alert.alert(
         "Thành công",
-        "Đăng ký thành công! Vui lòng kiểm tra email để lấy mã OTP xác thực."
+        "Đăng ký thành công! Vui lòng kiểm tra email để lấy mã OTP xác thực.",
       );
-      router.replace({ pathname: "/verify-otp", params: { email: email.trim() } });
+      navigation.replace("VerifyOtp", { email: email.trim() });
     } catch (e) {
       Alert.alert("Lỗi", e instanceof Error ? e.message : "Đăng ký thất bại");
     } finally {
@@ -67,10 +72,20 @@ export default function RegisterScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={{ flex: 1, padding: 24, justifyContent: "center" }}>
-            <Text variant="displaySmall" style={{ marginBottom: 8, textAlign: "center" }}>
+            <Text
+              variant="displaySmall"
+              style={{ marginBottom: 8, textAlign: "center" }}
+            >
               Đăng Ký
             </Text>
-            <Text variant="bodyLarge" style={{ marginBottom: 32, textAlign: "center", color: "#666" }}>
+            <Text
+              variant="bodyLarge"
+              style={{
+                marginBottom: 32,
+                textAlign: "center",
+                color: "#666",
+              }}
+            >
               Tạo tài khoản mới để bắt đầu
             </Text>
 
@@ -133,7 +148,9 @@ export default function RegisterScreen() {
                   right={
                     <TextInput.Icon
                       icon={showConfirmPassword ? "eye" : "eye-off"}
-                      onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onPress={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
                     />
                   }
                   style={{ marginBottom: 16 }}
@@ -150,27 +167,53 @@ export default function RegisterScreen() {
                   Đăng Ký
                 </Button>
 
-                <View style={{ flexDirection: "row", alignItems: "center", marginVertical: 24 }}>
-                  <View style={{ flex: 1, height: 1, backgroundColor: "#e0e0e0" }} />
-                  <Text style={{ marginHorizontal: 16, color: "#999" }}>hoặc</Text>
-                  <View style={{ flex: 1, height: 1, backgroundColor: "#e0e0e0" }} />
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginVertical: 24,
+                  }}
+                >
+                  <View
+                    style={{
+                      flex: 1,
+                      height: 1,
+                      backgroundColor: "#e0e0e0",
+                    }}
+                  />
+                  <Text style={{ marginHorizontal: 16, color: "#999" }}>
+                    hoặc
+                  </Text>
+                  <View
+                    style={{
+                      flex: 1,
+                      height: 1,
+                      backgroundColor: "#e0e0e0",
+                    }}
+                  />
                 </View>
 
-                <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
                   <Text variant="bodyMedium" style={{ color: "#666" }}>
                     Đã có tài khoản?{" "}
                   </Text>
-                  <Link href="/login" asChild>
-                    <Button mode="text" compact>
-                      Đăng nhập
-                    </Button>
-                  </Link>
+                  <Button
+                    mode="text"
+                    compact
+                    onPress={() => navigation.navigate("Login")}
+                  >
+                    Đăng nhập
+                  </Button>
                 </View>
               </Card.Content>
             </Card>
           </View>
         </ScrollView>
       </Surface>
-    </KeyboardAvoidingView>
-  );
-}
+    </KeyboardAvoidPatch assistant to=functions.ApplyPatch હેઠ_json Assistant to=functions.ApplyPatchанных to=functions.ApplyPatchателем to=functions.ApplyPatch ***!

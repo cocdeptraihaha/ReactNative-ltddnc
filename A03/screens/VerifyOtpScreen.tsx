@@ -7,13 +7,19 @@ import {
   Alert,
 } from "react-native";
 import { Text, TextInput, Button, Card, Surface } from "react-native-paper";
-import { Link, router, useLocalSearchParams } from "expo-router";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../navigation/RootStack";
 import { useAuth } from "../context/AuthContext";
 import * as authApi from "../lib/auth";
 
-export default function VerifyOtpScreen() {
-  const params = useLocalSearchParams<{ email: string }>();
-  const email = params.email ?? "";
+type VerifyOtpNav = NativeStackNavigationProp<RootStackParamList, "VerifyOtp">;
+type VerifyOtpRoute = RouteProp<RootStackParamList, "VerifyOtp">;
+
+export function VerifyOtpScreen() {
+  const navigation = useNavigation<VerifyOtpNav>();
+  const route = useRoute<VerifyOtpRoute>();
+  const email = route.params?.email ?? "";
   const { setAuth } = useAuth();
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,9 +34,12 @@ export default function VerifyOtpScreen() {
     try {
       const res = await authApi.verifyOtp(email, otp.trim());
       await setAuth(res.access_token, res.user);
-      router.replace("/home");
+      navigation.replace("Home");
     } catch (e) {
-      Alert.alert("Lỗi", e instanceof Error ? e.message : "Mã OTP không hợp lệ");
+      Alert.alert(
+        "Lỗi",
+        e instanceof Error ? e.message : "Mã OTP không hợp lệ",
+      );
     } finally {
       setLoading(false);
     }
@@ -41,9 +50,15 @@ export default function VerifyOtpScreen() {
     setResendLoading(true);
     try {
       await authApi.resendOtp(email);
-      Alert.alert("Thành công", "Mã OTP mới đã được gửi đến email của bạn");
+      Alert.alert(
+        "Thành công",
+        "Mã OTP mới đã được gửi đến email của bạn",
+      );
     } catch (e) {
-      Alert.alert("Lỗi", e instanceof Error ? e.message : "Không thể gửi lại OTP");
+      Alert.alert(
+        "Lỗi",
+        e instanceof Error ? e.message : "Không thể gửi lại OTP",
+      );
     } finally {
       setResendLoading(false);
     }
@@ -51,13 +66,23 @@ export default function VerifyOtpScreen() {
 
   if (!email) {
     return (
-      <Surface style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 24 }}>
-        <Text variant="bodyLarge" style={{ marginBottom: 16, textAlign: "center" }}>
+      <Surface
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 24,
+        }}
+      >
+        <Text
+          variant="bodyLarge"
+          style={{ marginBottom: 16, textAlign: "center" }}
+        >
           Thiếu thông tin email. Vui lòng đăng ký lại.
         </Text>
-        <Link href="/register" asChild>
-          <Button mode="contained">Quay lại đăng ký</Button>
-        </Link>
+        <Button mode="contained" onPress={() => navigation.navigate("Register")}>
+          Quay lại đăng ký
+        </Button>
       </Surface>
     );
   }
@@ -68,12 +93,25 @@ export default function VerifyOtpScreen() {
       style={{ flex: 1 }}
     >
       <Surface style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={{ flex: 1, padding: 24, justifyContent: "center" }}>
-            <Text variant="displaySmall" style={{ marginBottom: 8, textAlign: "center" }}>
+            <Text
+              variant="displaySmall"
+              style={{ marginBottom: 8, textAlign: "center" }}
+            >
               Xác thực tài khoản
             </Text>
-            <Text variant="bodyLarge" style={{ marginBottom: 32, textAlign: "center", color: "#666" }}>
+            <Text
+              variant="bodyLarge"
+              style={{
+                marginBottom: 32,
+                textAlign: "center",
+                color: "#666",
+              }}
+            >
               Nhập mã OTP đã gửi đến {email}
             </Text>
 
@@ -111,15 +149,23 @@ export default function VerifyOtpScreen() {
                   Gửi lại mã OTP
                 </Button>
 
-                <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
                   <Text variant="bodyMedium" style={{ color: "#666" }}>
                     Đã có tài khoản?{" "}
                   </Text>
-                  <Link href="/login" asChild>
-                    <Button mode="text" compact>
-                      Đăng nhập
-                    </Button>
-                  </Link>
+                  <Button
+                    mode="text"
+                    compact
+                    onPress={() => navigation.navigate("Login")}
+                  >
+                    Đăng nhập
+                  </Button>
                 </View>
               </Card.Content>
             </Card>
@@ -129,3 +175,4 @@ export default function VerifyOtpScreen() {
     </KeyboardAvoidingView>
   );
 }
+

@@ -1,5 +1,5 @@
 const { getDefaultConfig } = require("expo/metro-config");
-const { withNativeWind } = require('nativewind/metro');
 
+// Minimal config - avoid NativeWind withNativeWind (causes ERR_UNSUPPORTED_ESM_URL_SCHEME on Windows)
 const config = getDefaultConfig(__dirname);
-module.exports = withNativeWind(config, { input: './global.css' });
+module.exports = config;

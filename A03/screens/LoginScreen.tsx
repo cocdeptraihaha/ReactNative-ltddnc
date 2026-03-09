@@ -7,10 +7,15 @@ import {
   Alert,
 } from "react-native";
 import { Text, TextInput, Button, Card, Surface } from "react-native-paper";
-import { Link, router } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../navigation/RootStack";
 import { useAuth } from "../context/AuthContext";
 
-export default function LoginScreen() {
+type LoginNav = NativeStackNavigationProp<RootStackParamList, "Login">;
+
+export function LoginScreen() {
+  const navigation = useNavigation<LoginNav>();
   const { login, isLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +29,7 @@ export default function LoginScreen() {
 
     try {
       await login(email.trim(), password);
-      router.replace("/home");
+      navigation.replace("Home");
     } catch (e) {
       Alert.alert("Lỗi", e instanceof Error ? e.message : "Đăng nhập thất bại");
     }
@@ -41,10 +46,20 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={{ flex: 1, padding: 24, justifyContent: "center" }}>
-            <Text variant="displaySmall" style={{ marginBottom: 8, textAlign: "center" }}>
+            <Text
+              variant="displaySmall"
+              style={{ marginBottom: 8, textAlign: "center" }}
+            >
               Đăng Nhập
             </Text>
-            <Text variant="bodyLarge" style={{ marginBottom: 32, textAlign: "center", color: "#666" }}>
+            <Text
+              variant="bodyLarge"
+              style={{
+                marginBottom: 32,
+                textAlign: "center",
+                color: "#666",
+              }}
+            >
               Chào mừng bạn trở lại!
             </Text>
 
@@ -79,7 +94,7 @@ export default function LoginScreen() {
 
                 <Button
                   mode="text"
-                  onPress={() => router.push("/forgot-password")}
+                  onPress={() => navigation.navigate("ForgotPassword")}
                   style={{ alignSelf: "flex-end", marginBottom: 24 }}
                 >
                   Quên mật khẩu?
@@ -96,21 +111,49 @@ export default function LoginScreen() {
                   Đăng Nhập
                 </Button>
 
-                <View style={{ flexDirection: "row", alignItems: "center", marginVertical: 24 }}>
-                  <View style={{ flex: 1, height: 1, backgroundColor: "#e0e0e0" }} />
-                  <Text style={{ marginHorizontal: 16, color: "#999" }}>hoặc</Text>
-                  <View style={{ flex: 1, height: 1, backgroundColor: "#e0e0e0" }} />
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginVertical: 24,
+                  }}
+                >
+                  <View
+                    style={{
+                      flex: 1,
+                      height: 1,
+                      backgroundColor: "#e0e0e0",
+                    }}
+                  />
+                  <Text style={{ marginHorizontal: 16, color: "#999" }}>
+                    hoặc
+                  </Text>
+                  <View
+                    style={{
+                      flex: 1,
+                      height: 1,
+                      backgroundColor: "#e0e0e0",
+                    }}
+                  />
                 </View>
 
-                <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
                   <Text variant="bodyMedium" style={{ color: "#666" }}>
                     Chưa có tài khoản?{" "}
                   </Text>
-                  <Link href="/register" asChild>
-                    <Button mode="text" compact>
-                      Đăng ký ngay
-                    </Button>
-                  </Link>
+                  <Button
+                    mode="text"
+                    compact
+                    onPress={() => navigation.navigate("Register")}
+                  >
+                    Đăng ký ngay
+                  </Button>
                 </View>
               </Card.Content>
             </Card>
@@ -120,3 +163,4 @@ export default function LoginScreen() {
     </KeyboardAvoidingView>
   );
 }
+

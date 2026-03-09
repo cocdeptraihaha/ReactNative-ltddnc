@@ -7,10 +7,18 @@ import {
   Alert,
 } from "react-native";
 import { Text, TextInput, Button, Card, Surface } from "react-native-paper";
-import { Link, router } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../navigation/RootStack";
 import * as authApi from "../lib/auth";
 
-export default function ForgotPasswordScreen() {
+type ForgotNav = NativeStackNavigationProp<
+  RootStackParamList,
+  "ForgotPassword"
+>;
+
+export function ForgotPasswordScreen() {
+  const navigation = useNavigation<ForgotNav>();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -22,10 +30,16 @@ export default function ForgotPasswordScreen() {
     setLoading(true);
     try {
       await authApi.forgotPassword(email.trim());
-      Alert.alert("Thành công", "Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra.");
-      router.replace({ pathname: "/reset-password", params: { email: email.trim() } });
+      Alert.alert(
+        "Thành công",
+        "Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra.",
+      );
+      navigation.replace("ResetPassword", { email: email.trim() });
     } catch (e) {
-      Alert.alert("Lỗi", e instanceof Error ? e.message : "Không thể gửi OTP");
+      Alert.alert(
+        "Lỗi",
+        e instanceof Error ? e.message : "Không thể gửi OTP",
+      );
     } finally {
       setLoading(false);
     }
@@ -37,12 +51,25 @@ export default function ForgotPasswordScreen() {
       style={{ flex: 1 }}
     >
       <Surface style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={{ flex: 1, padding: 24, justifyContent: "center" }}>
-            <Text variant="displaySmall" style={{ marginBottom: 8, textAlign: "center" }}>
+            <Text
+              variant="displaySmall"
+              style={{ marginBottom: 8, textAlign: "center" }}
+            >
               Quên mật khẩu
             </Text>
-            <Text variant="bodyLarge" style={{ marginBottom: 32, textAlign: "center", color: "#666" }}>
+            <Text
+              variant="bodyLarge"
+              style={{
+                marginBottom: 32,
+                textAlign: "center",
+                color: "#666",
+              }}
+            >
               Nhập email để nhận mã OTP đặt lại mật khẩu
             </Text>
 
@@ -70,12 +97,21 @@ export default function ForgotPasswordScreen() {
                   Gửi mã OTP
                 </Button>
 
-                <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", marginTop: 24 }}>
-                  <Link href="/login" asChild>
-                    <Button mode="text" compact>
-                      Quay lại đăng nhập
-                    </Button>
-                  </Link>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginTop: 24,
+                  }}
+                >
+                  <Button
+                    mode="text"
+                    compact
+                    onPress={() => navigation.navigate("Login")}
+                  >
+                    Quay lại đăng nhập
+                  </Button>
                 </View>
               </Card.Content>
             </Card>
@@ -85,3 +121,4 @@ export default function ForgotPasswordScreen() {
     </KeyboardAvoidingView>
   );
 }
+
