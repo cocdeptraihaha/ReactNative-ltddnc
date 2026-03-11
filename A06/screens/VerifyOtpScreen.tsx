@@ -1,19 +1,22 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Alert,
+  View,
 } from "react-native";
-import { Surface, Text, TextInput, useTheme } from "react-native-paper";
-import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { Surface, Text, useTheme } from "react-native-paper";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RouteProp } from "@react-navigation/native";
 import type { RootStackParamList } from "../navigation/RootStack";
 import { useAuth } from "../context/AuthContext";
 import * as authApi from "../lib/auth";
 import { AppButton } from "../components/AppButton";
 import { AppTextInput } from "../components/AppTextInput";
-import { FormCard } from "../components/FormCard";
+
 type VerifyOtpNav = NativeStackNavigationProp<RootStackParamList, "VerifyOtp">;
 type VerifyOtpRoute = RouteProp<RootStackParamList, "VerifyOtp">;
 
@@ -38,10 +41,7 @@ export function VerifyOtpScreen() {
       await setAuth(res.access_token, res.user);
       navigation.replace("Tabs");
     } catch (e) {
-      Alert.alert(
-        "Lỗi",
-        e instanceof Error ? e.message : "Mã OTP không hợp lệ",
-      );
+      Alert.alert("Lỗi", e instanceof Error ? e.message : "OTP không hợp lệ");
     } finally {
       setLoading(false);
     }
@@ -52,15 +52,9 @@ export function VerifyOtpScreen() {
     setResendLoading(true);
     try {
       await authApi.resendOtp(email);
-      Alert.alert(
-        "Thành công",
-        "Mã OTP mới đã được gửi đến email của bạn",
-      );
+      Alert.alert("Thành công", "Mã OTP mới đã được gửi đến email");
     } catch (e) {
-      Alert.alert(
-        "Lỗi",
-        e instanceof Error ? e.message : "Không thể gửi lại OTP",
-      );
+      Alert.alert("Lỗi", e instanceof Error ? e.message : "Không thể gửi lại");
     } finally {
       setResendLoading(false);
     }
@@ -68,25 +62,20 @@ export function VerifyOtpScreen() {
 
   if (!email) {
     return (
-      <Surface style={{ flex: 1 }}>
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-            padding: 24,
-          }}
-        >
-          <Text
-            variant="bodyLarge"
-            style={{ marginBottom: 16, textAlign: "center" }}
-          >
-            Thiếu thông tin email. Vui lòng đăng ký lại.
-          </Text>
-          <AppButton mode="contained" onPress={() => navigation.navigate("Register")}>
-            Quay lại đăng ký
-          </AppButton>
-        </View>
+      <Surface
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 24,
+        }}
+      >
+        <Text variant="bodyLarge" style={{ marginBottom: 16, textAlign: "center" }}>
+          Thiếu thông tin email. Vui lòng đăng ký lại.
+        </Text>
+        <AppButton mode="contained" onPress={() => navigation.navigate("Register")}>
+          Quay lại đăng ký
+        </AppButton>
       </Surface>
     );
   }
@@ -96,92 +85,111 @@ export function VerifyOtpScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
-      <Surface style={{ flex: 1 }}>
+      <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
             paddingHorizontal: 24,
-            paddingVertical: 24,
+            paddingVertical: 32,
             justifyContent: "center",
           }}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={{ flex: 1 }}>
-            <Text
-              variant="displaySmall"
-              style={{ marginBottom: 8, textAlign: "center" }}
-            >
-              Xác thực tài khoản
-            </Text>
-            <Text
-              variant="bodyLarge"
+          <View style={{ alignItems: "center", marginBottom: 32 }}>
+            <View
               style={{
-                marginBottom: 32,
-                textAlign: "center",
-                color: theme.colors.onSurfaceVariant,
+                width: 72,
+                height: 72,
+                borderRadius: 22,
+                backgroundColor: theme.colors.primaryContainer,
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 16,
               }}
             >
-              Nhập mã OTP đã gửi đến {email}
+              <MaterialCommunityIcons
+                name="shield-check-outline"
+                size={36}
+                color={theme.colors.primary}
+              />
+            </View>
+            <Text
+              variant="headlineMedium"
+              style={{ fontWeight: "800", marginBottom: 4 }}
+            >
+              Xác thực OTP
             </Text>
+            <Text
+              variant="bodyMedium"
+              style={{
+                color: theme.colors.onSurfaceVariant,
+                textAlign: "center",
+                maxWidth: 280,
+              }}
+            >
+              Nhập mã 6 chữ số đã gửi đến{"\n"}
+              <Text style={{ fontWeight: "700", color: theme.colors.primary }}>
+                {email}
+              </Text>
+            </Text>
+          </View>
 
-            <FormCard>
-              <View style={{ marginBottom: 16 }}>
-                <AppTextInput
-                  label="Mã OTP"
-                  value={otp}
-                  onChangeText={setOtp}
-                  keyboardType="number-pad"
-                  maxLength={6}
-                  placeholder="123456"
-                />
-              </View>
+          <View style={{ width: "100%", maxWidth: 400, alignSelf: "center", gap: 14 }}>
+            <AppTextInput
+              label="Mã OTP"
+              value={otp}
+              onChangeText={setOtp}
+              keyboardType="number-pad"
+              maxLength={6}
+              placeholder="123456"
+              style={{ textAlign: "center", fontSize: 24, letterSpacing: 8 }}
+            />
 
-              <View style={{ marginBottom: 16 }}>
-                <AppButton
-                  mode="contained"
-                  onPress={handleVerify}
-                  loading={loading}
-                  disabled={loading}
-                >
-                  Xác thực
-                </AppButton>
-              </View>
+            <AppButton
+              mode="contained"
+              onPress={handleVerify}
+              loading={loading}
+              disabled={loading}
+              icon="check-circle-outline"
+              contentStyle={{ paddingVertical: 6 }}
+              style={{ borderRadius: 14 }}
+            >
+              Xác thực
+            </AppButton>
 
+            <AppButton
+              mode="text"
+              onPress={handleResend}
+              loading={resendLoading}
+              disabled={resendLoading}
+              contentStyle={{ paddingVertical: 0 }}
+            >
+              Gửi lại mã OTP
+            </AppButton>
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "center",
+                alignItems: "center",
+                marginTop: 16,
+              }}
+            >
+              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                Đã có tài khoản?{" "}
+              </Text>
               <AppButton
                 mode="text"
-                onPress={handleResend}
-                loading={resendLoading}
-                disabled={resendLoading}
-                style={{ marginBottom: 24 }}
+                compact
+                onPress={() => navigation.navigate("Login")}
                 contentStyle={{ paddingVertical: 0 }}
               >
-                Gửi lại mã OTP
+                Đăng nhập
               </AppButton>
-
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                  Đã có tài khoản?{" "}
-                </Text>
-                <AppButton
-                  mode="text"
-                  compact
-                  onPress={() => navigation.navigate("Login")}
-                  contentStyle={{ paddingVertical: 0 }}
-                >
-                  Đăng nhập
-                </AppButton>
-              </View>
-            </FormCard>
+            </View>
           </View>
         </ScrollView>
       </Surface>
     </KeyboardAvoidingView>
   );
 }
-

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   View,
   KeyboardAvoidingView,
@@ -7,13 +7,13 @@ import {
   Alert,
 } from "react-native";
 import { Text, Surface, useTheme, TextInput } from "react-native-paper";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootStack";
 import { useAuth } from "../context/AuthContext";
 import { AppButton } from "../components/AppButton";
 import { AppTextInput } from "../components/AppTextInput";
-import { FormCard } from "../components/FormCard";
 
 type LoginNav = NativeStackNavigationProp<RootStackParamList, "Login">;
 
@@ -30,15 +30,13 @@ export function LoginScreen() {
       Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin");
       return;
     }
-
     try {
       await login(email.trim(), password);
       navigation.replace("Tabs");
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Đăng nhập thất bại";
       Alert.alert(
         "Đăng nhập thất bại",
-        `${msg}\n\nGợi ý:\n- Kiểm tra API_BASE (http://IP:8000)\n- Android cần bật cleartext HTTP\n- iOS có thể bị ATS chặn HTTP`,
+        e instanceof Error ? e.message : "Đăng nhập thất bại",
       );
     }
   };
@@ -48,129 +46,134 @@ export function LoginScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
-      <Surface style={{ flex: 1 }}>
+      <Surface
+        style={{ flex: 1, backgroundColor: theme.colors.background }}
+      >
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
             paddingHorizontal: 24,
-            paddingVertical: 24,
+            paddingVertical: 32,
             justifyContent: "center",
           }}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={{ flex: 1 }}>
-            <Text
-              variant="displaySmall"
-              style={{ marginBottom: 8, textAlign: "center" }}
+          <View style={{ alignItems: "center", marginBottom: 32 }}>
+            <View
+              style={{
+                width: 72,
+                height: 72,
+                borderRadius: 22,
+                backgroundColor: theme.colors.primaryContainer,
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 16,
+              }}
             >
-              Đăng Nhập
+              <MaterialCommunityIcons
+                name="login-variant"
+                size={36}
+                color={theme.colors.primary}
+              />
+            </View>
+            <Text
+              variant="headlineMedium"
+              style={{ fontWeight: "800", marginBottom: 4 }}
+            >
+              Đăng nhập
             </Text>
             <Text
-              variant="bodyLarge"
-              style={{
-                marginBottom: 32,
-                textAlign: "center",
-                color: theme.colors.onSurfaceVariant,
-              }}
+              variant="bodyMedium"
+              style={{ color: theme.colors.onSurfaceVariant }}
             >
               Chào mừng bạn trở lại!
             </Text>
+          </View>
 
-            <FormCard>
-              <AppTextInput
-                  label="Email"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={{ marginBottom: 16 }}
-              />
+          <View style={{ width: "100%", maxWidth: 400, alignSelf: "center", gap: 14 }}>
+            <AppTextInput
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              left={<TextInput.Icon icon="email-outline" />}
+            />
 
-              <AppTextInput
-                  label="Mật khẩu"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  right={
-                    <TextInput.Icon
-                      icon={showPassword ? "eye" : "eye-off"}
-                      onPress={() => setShowPassword(!showPassword)}
-                    />
-                  }
-                  style={{ marginBottom: 16 }}
-              />
-
-              <AppButton
-                  mode="text"
-                  onPress={() => navigation.navigate("ForgotPassword")}
-                  style={{ alignSelf: "flex-end", marginBottom: 24 }}
-                  contentStyle={{ paddingVertical: 0 }}
-                >
-                  Quên mật khẩu?
-              </AppButton>
-
-              <AppButton
-                  mode="contained"
-                  onPress={handleLogin}
-                  loading={isLoading}
-                  disabled={isLoading}
-                  style={{ marginBottom: 16 }}
-                >
-                  Đăng Nhập
-              </AppButton>
-
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginVertical: 24,
-                }}
-              >
-                <View
-                  style={{
-                    flex: 1,
-                    height: 1,
-                    backgroundColor: theme.colors.outline,
-                  }}
+            <AppTextInput
+              label="Mật khẩu"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              left={<TextInput.Icon icon="lock-outline" />}
+              right={
+                <TextInput.Icon
+                  icon={showPassword ? "eye" : "eye-off"}
+                  onPress={() => setShowPassword(!showPassword)}
                 />
-                <Text style={{ marginHorizontal: 16, color: theme.colors.onSurfaceVariant }}>
-                  hoặc
-                </Text>
-                <View
-                  style={{
-                    flex: 1,
-                    height: 1,
-                    backgroundColor: theme.colors.outline,
-                  }}
-                />
-              </View>
+              }
+            />
 
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
+            <AppButton
+              mode="text"
+              onPress={() => navigation.navigate("ForgotPassword")}
+              style={{ alignSelf: "flex-end" }}
+              contentStyle={{ paddingVertical: 0 }}
+              compact
+            >
+              Quên mật khẩu?
+            </AppButton>
+
+            <AppButton
+              mode="contained"
+              onPress={handleLogin}
+              loading={isLoading}
+              disabled={isLoading}
+              icon="arrow-right"
+              contentStyle={{ paddingVertical: 6, flexDirection: "row-reverse" }}
+              style={{ borderRadius: 14 }}
+            >
+              Đăng nhập
+            </AppButton>
+
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginVertical: 20,
+              }}
+            >
+              <View style={{ flex: 1, height: 1, backgroundColor: theme.colors.outlineVariant }} />
+              <Text style={{ marginHorizontal: 14, color: theme.colors.onSurfaceVariant, fontSize: 13 }}>
+                hoặc
+              </Text>
+              <View style={{ flex: 1, height: 1, backgroundColor: theme.colors.outlineVariant }} />
+            </View>
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                Chưa có tài khoản?{" "}
+              </Text>
+              <AppButton
+                mode="text"
+                compact
+                onPress={() => navigation.navigate("Register")}
+                contentStyle={{ paddingVertical: 0 }}
               >
-                <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                  Chưa có tài khoản?{" "}
-                </Text>
-                <AppButton
-                  mode="text"
-                  compact
-                  onPress={() => navigation.navigate("Register")}
-                  contentStyle={{ paddingVertical: 0 }}
-                >
-                  Đăng ký ngay
-                </AppButton>
-              </View>
-            </FormCard>
+                Đăng ký ngay
+              </AppButton>
+            </View>
           </View>
         </ScrollView>
       </Surface>
     </KeyboardAvoidingView>
   );
 }
-

@@ -1,14 +1,23 @@
 import { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { Image } from "expo-image";
-import { ActivityIndicator, Appbar, Button, Snackbar, Surface, Text, useTheme } from "react-native-paper";
+import {
+  ActivityIndicator,
+  Appbar,
+  Button,
+  Divider,
+  Snackbar,
+  Surface,
+  Text,
+  useTheme,
+} from "react-native-paper";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RouteProp } from "@react-navigation/native";
 import type { RootStackParamList } from "../navigation/RootStack";
 import { getBook, type BookWithDetail } from "../lib/books";
 import { formatDateVN } from "../utils/date";
-import { FormCard } from "../components/FormCard";
 import { useAuth } from "../context/AuthContext";
 import { addToCart } from "../lib/cart";
 
@@ -25,262 +34,301 @@ export function BookDetailScreen() {
   const [book, setBook] = useState<BookWithDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [snackbar, setSnackbar] = useState<{ visible: boolean; message: string }>({ visible: false, message: "" });
-
-  function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
-    if (value === undefined || value === null || value === "") return null;
-    return (
-      <View style={{ marginBottom: 12 }}>
-        <View style={{ marginBottom: 2 }}>
-          <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-            {label}
-          </Text>
-        </View>
-        <Text variant="bodyMedium" style={{ color: theme.colors.onSurface }}>
-          {String(value)}
-        </Text>
-      </View>
-    );
-  }
+  const [snackbar, setSnackbar] = useState({ visible: false, message: "" });
 
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await getBook(bookId);
-        setBook(data);
+        setBook(await getBook(bookId));
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load book detail");
+        setError(e instanceof Error ? e.message : "Lỗi tải chi tiết sách");
       } finally {
         setLoading(false);
       }
     })();
   }, [bookId]);
 
-  const handleBack = () => {
-    navigation.goBack();
-  };
-
   if (loading && !book) {
     return (
-      <Surface style={{ flex: 1 }}>
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <ActivityIndicator size="large" />
-          <Text variant="bodyLarge" style={{ marginTop: 12 }}>
-            Loading book...
-          </Text>
-        </View>
+      <Surface style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
       </Surface>
     );
   }
 
   if (error || !book) {
     return (
-      <Surface style={{ flex: 1 }}>
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <Text variant="bodyLarge" style={{ color: theme.colors.error, marginBottom: 8 }}>
-            {error ?? "Book not found"}
-          </Text>
-        </View>
+      <Surface style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <MaterialCommunityIcons name="alert-circle-outline" size={48} color={theme.colors.error} />
+        <Text variant="bodyLarge" style={{ color: theme.colors.error, marginTop: 12 }}>
+          {error ?? "Không tìm thấy sách"}
+        </Text>
+        <Button mode="text" onPress={() => navigation.goBack()} style={{ marginTop: 16 }}>
+          Quay lại
+        </Button>
       </Surface>
     );
   }
 
   const d = book.book_detail;
+  const finalPrice = book.final_price ?? book.selling_price;
+  const originalPrice = book.original_price ?? book.selling_price;
 
   const handleAddToCart = async () => {
     if (!token) {
-      setSnackbar({ visible: true, message: "Vui lòng đăng nhập để thêm vào giỏ." });
+      setSnackbar({ visible: true, message: "Vui lòng đăng nhập." });
       return;
     }
     try {
       await addToCart(token, { book_id: book.id, quantity: 1 });
-      setSnackbar({ visible: true, message: "Đã thêm vào giỏ hàng." });
-    } catch (e) {
-      setSnackbar({
-        visible: true,
-        message: "Thêm vào giỏ thất bại. Vui lòng thử lại.",
-      });
+      setSnackbar({ visible: true, message: "Đã thêm vào giỏ hàng!" });
+    } catch {
+      setSnackbar({ visible: true, message: "Thêm vào giỏ thất bại." });
     }
   };
 
-  const handleBuyNow = async () => {
+  const handleBuyNow = () => {
     if (!token) {
-      setSnackbar({ visible: true, message: "Vui lòng đăng nhập để mua hàng." });
+      setSnackbar({ visible: true, message: "Vui lòng đăng nhập." });
       return;
     }
-    try {
-      navigation.navigate("Checkout", {
-        mode: "single",
-        items: [{ bookId: book.id, quantity: 1 }],
-      });
-    } catch (e) {
-      setSnackbar({
-        visible: true,
-        message: "Không thể mua ngay. Vui lòng thử lại.",
-      });
-    }
+    navigation.navigate("Checkout", {
+      mode: "single",
+      items: [{ bookId: book.id, quantity: 1 }],
+    });
   };
 
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <Appbar.Header
-        elevated
-        theme={{ colors: { primaryContainer: theme.colors.primaryContainer } }}
-        style={{
-          borderBottomWidth: 1,
-          borderBottomColor: theme.colors.outlineVariant,
-        }}
-      >
-        <Appbar.BackAction onPress={handleBack} />
-        <Appbar.Content title={book.title ?? "Book detail"} />
+      <Appbar.Header elevated>
+        <Appbar.BackAction onPress={() => navigation.goBack()} />
+        <Appbar.Content title="Chi tiết sách" titleStyle={{ fontWeight: "700" }} />
       </Appbar.Header>
 
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingVertical: 16,
-          alignItems: "center",
-          paddingBottom: 80,
-        }}
-      >
-        <View style={{ width: "100%", maxWidth: 720 }}>
-          <FormCard>
-            <View style={{ marginBottom: 16 }}>
-              <Text
-                variant="titleMedium"
-                style={{ fontWeight: "700", color: theme.colors.onSurface }}
-              >
-                {book.title ?? "Untitled book"}
-              </Text>
-            </View>
+      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+        {/* ── Cover image ── */}
+        {d?.image_url ? (
+          <Image
+            source={{ uri: d.image_url }}
+            style={{
+              width: "100%",
+              height: 280,
+              backgroundColor: theme.colors.surfaceVariant,
+            }}
+            contentFit="cover"
+            transition={200}
+          />
+        ) : (
+          <View
+            style={{
+              width: "100%",
+              height: 200,
+              backgroundColor: theme.colors.surfaceVariant,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <MaterialCommunityIcons
+              name="book-open-page-variant"
+              size={56}
+              color={theme.colors.onSurfaceVariant}
+            />
+          </View>
+        )}
 
-            {d?.image_url && (
-              <View
+        <View style={{ padding: 16, gap: 16 }}>
+          {/* ── Title + author ── */}
+          <View>
+            <Text
+              variant="titleLarge"
+              style={{ fontWeight: "800", lineHeight: 28 }}
+            >
+              {book.title ?? "Untitled"}
+            </Text>
+            {book.author && (
+              <Text
+                variant="bodyMedium"
                 style={{
-                  marginBottom: 16,
-                  borderRadius: 16,
-                  overflow: "hidden",
-                  backgroundColor: theme.colors.surfaceVariant,
+                  color: theme.colors.onSurfaceVariant,
+                  marginTop: 4,
                 }}
               >
-                <Image
-                  source={{ uri: d.image_url }}
+                {book.author}
+              </Text>
+            )}
+          </View>
+
+          {/* ── Price section ── */}
+          {finalPrice != null && (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+                flexWrap: "wrap",
+              }}
+            >
+              <Text
+                variant="headlineSmall"
+                style={{ fontWeight: "800", color: theme.colors.primary }}
+              >
+                {finalPrice.toLocaleString("vi-VN")}đ
+              </Text>
+              {book.has_discount && originalPrice != null && originalPrice > (finalPrice ?? 0) && (
+                <Text
+                  variant="bodyMedium"
                   style={{
-                    width: "100%",
-                    height: 240,
+                    color: theme.colors.onSurfaceVariant,
+                    textDecorationLine: "line-through",
                   }}
-                  contentFit="cover"
-                />
-              </View>
-            )}
-
-            <InfoRow label="Author" value={book.author} />
-
-            {(book.final_price ?? book.selling_price) != null && (
-              <View style={{ marginBottom: 12 }}>
-                <View style={{ marginBottom: 2 }}>
-                  <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                    Price
+                >
+                  {originalPrice.toLocaleString("vi-VN")}đ
+                </Text>
+              )}
+              {book.has_discount && (book.discount_percent != null || book.discount_amount != null) && (
+                <View
+                  style={{
+                    backgroundColor: theme.colors.error,
+                    paddingHorizontal: 8,
+                    paddingVertical: 2,
+                    borderRadius: 6,
+                  }}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "800", fontSize: 12 }}>
+                    {book.discount_percent != null
+                      ? `-${Math.round(book.discount_percent)}%`
+                      : `-${Math.round(book.discount_amount ?? 0).toLocaleString("vi-VN")}đ`}
                   </Text>
                 </View>
+              )}
+            </View>
+          )}
 
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                  {book.has_discount && (book.discount_percent != null || book.discount_amount != null) && (
-                    <View
-                      style={{
-                        paddingHorizontal: 8,
-                        paddingVertical: 3,
-                        borderRadius: 999,
-                        backgroundColor: theme.colors.errorContainer,
-                        borderWidth: 1,
-                        borderColor: theme.colors.error,
-                      }}
-                    >
-                      <Text variant="labelSmall" style={{ color: theme.colors.onErrorContainer }}>
-                        {book.discount_percent != null
-                          ? `-${Math.round(book.discount_percent)}%`
-                          : `- ${Math.round(book.discount_amount ?? 0).toLocaleString("vi-VN")}đ`}
-                      </Text>
-                    </View>
-                  )}
+          {/* ── Stock ── */}
+          {book.stock_quantity != null && (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <MaterialCommunityIcons
+                name="package-variant"
+                size={16}
+                color={
+                  book.stock_quantity > 0
+                    ? theme.colors.primary
+                    : theme.colors.error
+                }
+              />
+              <Text
+                variant="bodySmall"
+                style={{
+                  color:
+                    book.stock_quantity > 0
+                      ? theme.colors.onSurfaceVariant
+                      : theme.colors.error,
+                }}
+              >
+                {book.stock_quantity > 0
+                  ? `Còn ${book.stock_quantity} sản phẩm`
+                  : "Hết hàng"}
+              </Text>
+            </View>
+          )}
 
-                  {book.has_discount && (book.original_price ?? book.selling_price) != null && (
-                    <Text
-                      variant="bodySmall"
-                      style={{
-                        color: theme.colors.onSurfaceVariant,
-                        textDecorationLine: "line-through",
-                      }}
-                    >
-                      {(book.original_price ?? book.selling_price)?.toLocaleString("vi-VN")} đ
-                    </Text>
-                  )}
+          <Divider />
 
-                  <Text variant="bodyLarge" style={{ color: theme.colors.primary, fontWeight: "800" }}>
-                    {(book.final_price ?? book.selling_price)?.toLocaleString("vi-VN")} đ
-                  </Text>
-                </View>
-              </View>
-            )}
+          {/* ── Description ── */}
+          {d?.description && (
+            <View>
+              <SectionLabel text="Mô tả" />
+              <Text
+                variant="bodyMedium"
+                style={{ color: theme.colors.onSurface, lineHeight: 22 }}
+              >
+                {d.description}
+              </Text>
+            </View>
+          )}
 
-            <InfoRow label="Code" value={book.code} />
-            <InfoRow label="Edition" value={book.edition} />
-            <InfoRow
-              label="Publication date"
-              value={
-                book.publication_date
-                  ? formatDateVN(new Date(book.publication_date))
-                  : null
-              }
-            />
-            <InfoRow label="Stock quantity" value={book.stock_quantity} />
-
-            {d && (
-              <>
-                <InfoRow label="Description" value={d.description} />
-                <InfoRow label="Pages" value={d.pages} />
-                <InfoRow label="Publisher" value={d.publisher} />
-                <InfoRow label="Supplier" value={d.supplier} />
-                <InfoRow label="Height (cm)" value={d.height} />
-                <InfoRow label="Width (cm)" value={d.width} />
-                <InfoRow label="Length (cm)" value={d.length} />
-                <InfoRow label="Weight (kg)" value={d.weight} />
-              </>
-            )}
-          </FormCard>
+          {/* ── Details grid ── */}
+          <View>
+            <SectionLabel text="Thông tin chi tiết" />
+            <View
+              style={{
+                backgroundColor: theme.colors.surface,
+                borderRadius: 12,
+                overflow: "hidden",
+                borderWidth: 1,
+                borderColor: theme.colors.outlineVariant,
+              }}
+            >
+              <DetailRow label="Mã sách" value={book.code} theme={theme} />
+              <DetailRow label="Phiên bản" value={book.edition} theme={theme} />
+              <DetailRow
+                label="Ngày xuất bản"
+                value={
+                  book.publication_date
+                    ? formatDateVN(new Date(book.publication_date))
+                    : null
+                }
+                theme={theme}
+              />
+              {d && (
+                <>
+                  <DetailRow label="Số trang" value={d.pages} theme={theme} />
+                  <DetailRow label="NXB" value={d.publisher} theme={theme} />
+                  <DetailRow label="Nhà cung cấp" value={d.supplier} theme={theme} />
+                  <DetailRow
+                    label="Kích thước"
+                    value={
+                      d.height || d.width || d.length
+                        ? `${d.length ?? "?"}×${d.width ?? "?"}×${d.height ?? "?"} cm`
+                        : null
+                    }
+                    theme={theme}
+                  />
+                  <DetailRow
+                    label="Trọng lượng"
+                    value={d.weight ? `${d.weight} kg` : null}
+                    theme={theme}
+                    last
+                  />
+                </>
+              )}
+            </View>
+          </View>
         </View>
       </ScrollView>
 
+      {/* ── Bottom bar ── */}
       <View
         style={{
+          flexDirection: "row",
+          gap: 10,
           paddingHorizontal: 16,
-          paddingVertical: 10,
+          paddingVertical: 12,
           borderTopWidth: 1,
-          borderTopColor: theme.colors.outlineVariant,
+          borderTopColor: theme.colors.surfaceVariant,
           backgroundColor: theme.colors.surface,
         }}
       >
-        <View style={{ width: "100%", maxWidth: 720, alignSelf: "center", flexDirection: "row", gap: 12 }}>
-          <Button
-            mode="outlined"
-            onPress={handleAddToCart}
-            style={{ flex: 1, borderRadius: 999 }}
-            contentStyle={{ paddingVertical: 6 }}
-          >
-            Thêm vào giỏ
-          </Button>
-          <Button
-            mode="contained"
-            onPress={handleBuyNow}
-            style={{ flex: 1, borderRadius: 999 }}
-            contentStyle={{ paddingVertical: 6 }}
-          >
-            Mua ngay
-          </Button>
-        </View>
+        <Button
+          mode="outlined"
+          onPress={handleAddToCart}
+          icon="cart-plus"
+          style={{ flex: 1, borderRadius: 12 }}
+          contentStyle={{ paddingVertical: 4 }}
+        >
+          Thêm vào giỏ
+        </Button>
+        <Button
+          mode="contained"
+          onPress={handleBuyNow}
+          icon="lightning-bolt"
+          style={{ flex: 1, borderRadius: 12 }}
+          contentStyle={{ paddingVertical: 4 }}
+        >
+          Mua ngay
+        </Button>
       </View>
 
       <Snackbar
@@ -295,3 +343,57 @@ export function BookDetailScreen() {
   );
 }
 
+function SectionLabel({ text }: { text: string }) {
+  return (
+    <Text
+      variant="titleSmall"
+      style={{ fontWeight: "700", marginBottom: 8 }}
+    >
+      {text}
+    </Text>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+  theme,
+  last,
+}: {
+  label: string;
+  value?: string | number | null;
+  theme: any;
+  last?: boolean;
+}) {
+  if (value === undefined || value === null || value === "") return null;
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        justifyContent: "space-between",
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        borderBottomWidth: last ? 0 : 1,
+        borderBottomColor: theme.colors.outlineVariant,
+      }}
+    >
+      <Text
+        variant="bodySmall"
+        style={{ color: theme.colors.onSurfaceVariant, flex: 1 }}
+      >
+        {label}
+      </Text>
+      <Text
+        variant="bodySmall"
+        style={{
+          color: theme.colors.onSurface,
+          fontWeight: "600",
+          flex: 1,
+          textAlign: "right",
+        }}
+      >
+        {String(value)}
+      </Text>
+    </View>
+  );
+}

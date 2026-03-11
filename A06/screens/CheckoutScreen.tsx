@@ -1,6 +1,17 @@
 import { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
-import { ActivityIndicator, Appbar, Button, RadioButton, Surface, Text, TextInput, useTheme } from "react-native-paper";
+import {
+  ActivityIndicator,
+  Appbar,
+  Button,
+  Divider,
+  RadioButton,
+  Surface,
+  Text,
+  TextInput,
+  useTheme,
+} from "react-native-paper";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RouteProp } from "@react-navigation/native";
@@ -8,9 +19,13 @@ import { useAuth } from "../context/AuthContext";
 import { getMyCart, type CartItemWithBook } from "../lib/cart";
 import { checkoutFromCart, type Order, type OrderCheckoutSummary } from "../lib/orders";
 import type { RootStackParamList } from "../navigation/RootStack";
-import { FormCard } from "../components/FormCard";
 import { AppSelect } from "../components/AppSelect";
-import { getProvinces, getWards, type ProvinceItem, type WardItem } from "../lib/addresses";
+import {
+  getProvinces,
+  getWards,
+  type ProvinceItem,
+  type WardItem,
+} from "../lib/addresses";
 import { previewPromotion } from "../lib/promotions";
 
 type Nav = NativeStackNavigationProp<RootStackParamList, "Checkout">;
@@ -31,7 +46,6 @@ export function CheckoutScreen() {
   const [province, setProvince] = useState("");
   const [ward, setWard] = useState("");
   const [promo, setPromo] = useState("");
-  const [lastOrder, setLastOrder] = useState<Order | null>(null);
   const [serverSummary, setServerSummary] = useState<OrderCheckoutSummary | null>(null);
   const [provinces, setProvinces] = useState<ProvinceItem[]>([]);
   const [wards, setWards] = useState<WardItem[]>([]);
@@ -48,73 +62,34 @@ export function CheckoutScreen() {
     }
   }, [user]);
 
-  // Tự động debounce gọi API check mã giảm giá khi người dùng ngừng nhập
   useEffect(() => {
     const code = promo.trim();
-    if (!code) {
-      setPromoPreviewDiscount(0);
-      return;
-    }
-    if (!isReady || !token) return;
-    if (!cartItems.length) return;
-
-    const subtotal = cartItems.reduce((sum, it) => {
-      const price = it.price ?? 0;
-      const original = it.original_price ?? it.price ?? 0;
-      const qty = it.quantity ?? 0;
-      return sum + (original - price) * qty + price * qty;
-    }, 0);
-
-    if (subtotal <= 0) {
-      setPromoPreviewDiscount(0);
-      return;
-    }
-
-    const handle = setTimeout(async () => {
+    if (!code) { setPromoPreviewDiscount(0); return; }
+    if (!isReady || !token || !cartItems.length) return;
+    const subtotal = cartItems.reduce((s, it) => s + (it.original_price ?? it.price ?? 0) * (it.quantity ?? 0), 0);
+    if (subtotal <= 0) { setPromoPreviewDiscount(0); return; }
+    const h = setTimeout(async () => {
       try {
         setPromoChecking(true);
         const res = await previewPromotion(code, subtotal);
-        if (!res.valid) {
-          setPromoPreviewDiscount(0);
-          setError(res.message || "Mã giảm giá không hợp lệ.");
-        } else {
-          setPromoPreviewDiscount(res.discount_amount);
-          setError(null);
-        }
+        if (!res.valid) { setPromoPreviewDiscount(0); setError(res.message || "Mã không hợp lệ"); }
+        else { setPromoPreviewDiscount(res.discount_amount); setError(null); }
       } catch (e) {
         setPromoPreviewDiscount(0);
-        if (e instanceof Error) {
-          setError(e.message);
-        } else {
-          setError("Không thể kiểm tra mã giảm giá.");
-        }
-      } finally {
-        setPromoChecking(false);
-      }
-    }, 500); // 0.5s sau khi ngừng gõ
-
-    return () => clearTimeout(handle);
+        setError(e instanceof Error ? e.message : "Lỗi kiểm tra mã");
+      } finally { setPromoChecking(false); }
+    }, 500);
+    return () => clearTimeout(h);
   }, [promo, isReady, token, cartItems]);
 
-  useEffect(() => {
-    getProvinces().then(setProvinces).catch(() => {});
-  }, []);
+  useEffect(() => { getProvinces().then(setProvinces).catch(() => {}); }, []);
 
   useEffect(() => {
-    if (!province.trim()) {
-      setWards([]);
-      return;
-    }
+    if (!province.trim()) { setWards([]); return; }
     const p = provinces.find((x) => x.name === province);
-    if (!p) {
-      setWards([]);
-      return;
-    }
+    if (!p) { setWards([]); return; }
     setLoadingWards(true);
-    getWards(p.code)
-      .then(setWards)
-      .catch(() => setWards([]))
-      .finally(() => setLoadingWards(false));
+    getWards(p.code).then(setWards).catch(() => setWards([])).finally(() => setLoadingWards(false));
   }, [province, provinces]);
 
   useEffect(() => {
@@ -122,40 +97,23 @@ export function CheckoutScreen() {
     const params = route.params;
     (async () => {
       try {
-        setLoading(true);
-        setError(null);
-
-        // Nếu có danh sách items truyền vào (từ Cart hoặc Buy Now)
+        setLoading(true); setError(null);
         if (params?.items && params.items.length > 0) {
-          // Case: chọn từ cart -> dùng cart summary rồi filter theo bookId
           const data = await getMyCart(token);
-          const byBookId = new Map<number, CartItemWithBook>();
-          for (const it of data) {
-            if (it.book_id != null) {
-              byBookId.set(it.book_id, it);
-            }
-          }
-          const mapped: CartItemWithBook[] = [];
-          for (const it of params.items) {
-            const row = byBookId.get(it.bookId);
-            if (row) {
-              mapped.push({
-                ...row,
-                quantity: it.quantity,
-              });
-            }
-          }
-          setCartItems(mapped);
+          const byBookId = new Map(data.filter((it) => it.book_id != null).map((it) => [it.book_id, it]));
+          setCartItems(
+            (params.items as { bookId: number; quantity: number }[])
+              .map((it) => {
+                const row = byBookId.get(it.bookId);
+                return row ? { ...row, quantity: it.quantity } : null;
+              })
+              .filter(Boolean) as CartItemWithBook[],
+          );
         } else {
-          // Mặc định: checkout toàn bộ giỏ như cũ
-          const data = await getMyCart(token);
-          setCartItems(data);
+          setCartItems(await getMyCart(token));
         }
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load cart");
-      } finally {
-        setLoading(false);
-      }
+      } catch (e) { setError(e instanceof Error ? e.message : "Lỗi tải giỏ"); }
+      finally { setLoading(false); }
     })();
   }, [isReady, token, route.params]);
 
@@ -163,9 +121,6 @@ export function CheckoutScreen() {
     return (
       <Surface style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator />
-        <Text variant="bodyLarge" style={{ marginTop: 8 }}>
-          Loading...
-        </Text>
       </Surface>
     );
   }
@@ -179,41 +134,26 @@ export function CheckoutScreen() {
     const original = it.original_price ?? it.price ?? 0;
     const qty = it.quantity ?? 0;
     itemAmount += original * qty;
-    if (original > price) {
-      discountTotal += (original - price) * qty;
-    }
+    if (original > price) discountTotal += (original - price) * qty;
   }
   const grandTotal = itemAmount - discountTotal + (hasItems ? shippingFee : 0);
-
   const itemAmountDisplay = serverSummary?.item_amount ?? itemAmount;
   const shippingFeeDisplay = serverSummary?.shipping_fee ?? (hasItems ? shippingFee : 0);
   const promoDiscountDisplay = serverSummary?.discount_total ?? promoPreviewDiscount;
-  const totalDisplay =
-    serverSummary?.total_amount ?? (grandTotal - promoPreviewDiscount);
+  const totalDisplay = serverSummary?.total_amount ?? (grandTotal - promoPreviewDiscount);
+
+  const fmtPrice = (n: number) => n.toLocaleString("vi-VN") + "đ";
 
   const handlePlaceOrder = async () => {
-    if (!token) return;
-    if (!cartItems.length) {
-      setError("Giỏ hàng trống.");
-      return;
-    }
-    if (!phone.trim() || !address.trim()) {
-      setError("Vui lòng nhập đầy đủ SĐT và địa chỉ giao hàng.");
-      return;
-    }
+    if (!token || !cartItems.length) { setError("Giỏ hàng trống."); return; }
+    if (!phone.trim() || !address.trim()) { setError("Nhập SĐT và địa chỉ."); return; }
     try {
-      setPlacing(true);
-      setError(null);
+      setPlacing(true); setError(null);
       const params = route.params;
-      const itemsPayload =
-        params?.items && params.items.length > 0
-          ? params.items.map((it) => ({
-              book_id: it.bookId,
-              quantity: it.quantity,
-            }))
-          : undefined;
-
-      const summary = await checkoutFromCart(token, {
+      const itemsPayload = params?.items?.length
+        ? (params.items as { bookId: number; quantity: number }[]).map((it) => ({ book_id: it.bookId, quantity: it.quantity }))
+        : undefined;
+      await checkoutFromCart(token, {
         note: note.trim() || undefined,
         phone_number: phone.trim(),
         shipping_address: address.trim(),
@@ -222,293 +162,222 @@ export function CheckoutScreen() {
         promotion_code: promo.trim() || undefined,
         items: itemsPayload,
       });
-      setLastOrder(summary.order);
-      setServerSummary(summary);
-      // Sau khi đặt hàng thành công, quay lại tab chính (Home)
       navigation.navigate("Tabs");
     } catch (e) {
-      if (e instanceof Error) {
-        const parts = e.message.split("\n");
-        const shortMsg = parts[parts.length - 1] || e.message;
-        setError(shortMsg);
-      } else {
-        setError("Đặt hàng thất bại. Vui lòng thử lại.");
-      }
-    } finally {
-      setPlacing(false);
-    }
+      const msg = e instanceof Error ? e.message.split("\n").pop() || e.message : "Đặt hàng thất bại.";
+      setError(msg);
+    } finally { setPlacing(false); }
   };
 
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <Appbar.Header
-        elevated
-        theme={{ colors: { primaryContainer: theme.colors.primaryContainer } }}
-        style={{ borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}
-      >
+      <Appbar.Header elevated>
         <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title="Thanh toán" />
+        <Appbar.Content title="Thanh toán" titleStyle={{ fontWeight: "700" }} />
       </Appbar.Header>
 
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100, gap: 14 }}>
+        {loading && (
+          <View style={{ paddingVertical: 24, alignItems: "center" }}><ActivityIndicator /></View>
+        )}
+
+        {/* ── Products ── */}
+        {hasItems && (
+          <Section title="Sản phẩm" icon="package-variant" theme={theme}>
+            {cartItems.map((it) => {
+              const price = it.price ?? 0;
+              const original = it.original_price ?? it.price ?? 0;
+              const qty = it.quantity ?? 0;
+              const title = it.title ?? `Sách #${it.book_id}`;
+              const hasDiscount = original > price;
+              return (
+                <View
+                  key={it.id}
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    paddingVertical: 8,
+                    borderBottomWidth: 1,
+                    borderBottomColor: theme.colors.outlineVariant,
+                    gap: 10,
+                  }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text variant="bodyMedium" numberOfLines={2} style={{ fontWeight: "600" }}>
+                      {title}
+                    </Text>
+                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
+                      SL: {qty}
+                    </Text>
+                  </View>
+                  <View style={{ alignItems: "flex-end" }}>
+                    {hasDiscount && (
+                      <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, textDecorationLine: "line-through" }}>
+                        {fmtPrice(original)}
+                      </Text>
+                    )}
+                    <Text variant="bodySmall" style={{ color: theme.colors.primary, fontWeight: "700" }}>
+                      {fmtPrice(price * qty)}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+          </Section>
+        )}
+
+        {/* ── Shipping info ── */}
+        <Section title="Thông tin giao hàng" icon="truck-outline" theme={theme}>
+          <View style={{ gap: 10 }}>
+            <TextInput mode="outlined" label="Số điện thoại" value={phone} onChangeText={setPhone} keyboardType="phone-pad" dense />
+            <TextInput mode="outlined" label="Địa chỉ" value={address} onChangeText={setAddress} dense />
+            <AppSelect
+              label="Tỉnh/Thành phố"
+              value={province}
+              onChange={(v) => { setProvince(v); setWard(""); }}
+              options={provinces.map((p) => ({ label: p.name, value: p.name }))}
+              placeholder="Chọn tỉnh/thành"
+            />
+            <AppSelect
+              label="Phường/Xã"
+              value={ward}
+              onChange={setWard}
+              disabled={!province || loadingWards}
+              options={wards.map((w) => ({ label: w.name, value: w.name }))}
+              placeholder={loadingWards ? "Đang tải..." : "Chọn phường/xã"}
+            />
+            <TextInput mode="outlined" label="Ghi chú (tuỳ chọn)" value={note} onChangeText={setNote} dense />
+          </View>
+        </Section>
+
+        {/* ── Payment ── */}
+        <Section title="Thanh toán" icon="credit-card-outline" theme={theme}>
+          <RadioButton.Item label="Thanh toán khi nhận hàng (COD)" value="cod" status="checked" />
+        </Section>
+
+        {/* ── Promo ── */}
+        <Section title="Mã giảm giá" icon="ticket-percent-outline" theme={theme}>
+          <TextInput
+            mode="outlined"
+            label="Nhập mã (nếu có)"
+            value={promo}
+            onChangeText={setPromo}
+            dense
+            right={promoChecking ? <TextInput.Icon icon="loading" /> : undefined}
+          />
+        </Section>
+
+        {/* ── Summary ── */}
+        <View
+          style={{
+            backgroundColor: theme.colors.surface,
+            borderRadius: 14,
+            padding: 14,
+            gap: 6,
+            elevation: 1,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.06,
+            shadowRadius: 3,
+          }}
+        >
+          <SummaryRow label="Tạm tính" value={fmtPrice(itemAmountDisplay)} theme={theme} />
+          {discountTotal > 0 && (
+            <SummaryRow label="Giảm giá sách" value={`-${fmtPrice(discountTotal)}`} theme={theme} color={theme.colors.error} />
+          )}
+          {hasItems && <SummaryRow label="Vận chuyển" value={fmtPrice(shippingFeeDisplay)} theme={theme} />}
+          {promoDiscountDisplay > 0 && (
+            <SummaryRow label="Mã giảm giá" value={`-${fmtPrice(promoDiscountDisplay)}`} theme={theme} color={theme.colors.error} />
+          )}
+          <Divider style={{ marginVertical: 4 }} />
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            <Text variant="titleMedium" style={{ fontWeight: "800" }}>Tổng cộng</Text>
+            <Text variant="titleMedium" style={{ fontWeight: "800", color: theme.colors.primary }}>{fmtPrice(totalDisplay)}</Text>
+          </View>
+        </View>
+
+        {error && (
+          <Text variant="bodySmall" style={{ color: theme.colors.error, textAlign: "center", fontWeight: "700" }}>
+            {error}
+          </Text>
+        )}
+      </ScrollView>
+
+      {/* ── Bottom bar ── */}
+      <View
+        style={{
           paddingHorizontal: 16,
-          paddingVertical: 16,
-          alignItems: "center",
+          paddingVertical: 12,
+          borderTopWidth: 1,
+          borderTopColor: theme.colors.surfaceVariant,
+          backgroundColor: theme.colors.surface,
         }}
       >
-        <View style={{ width: "100%", maxWidth: 720 }}>
-          <FormCard>
-            {loading && (
-              <View style={{ paddingVertical: 16, alignItems: "center" }}>
-                <ActivityIndicator />
-              </View>
-            )}
-
-            {hasItems && (
-              <View style={{ marginBottom: 16 }}>
-                <Text
-                  variant="titleMedium"
-                  style={{ fontWeight: "700", color: theme.colors.onSurface }}
-                >
-                  Sản phẩm
-                </Text>
-                {cartItems.map((it) => {
-                  const price = it.price ?? 0;
-                  const original = it.original_price ?? it.price ?? 0;
-                  const qty = it.quantity ?? 0;
-                  const title = it.title ?? `Sách #${it.book_id}`;
-                  const hasDiscount = original > price;
-                  return (
-                    <View
-                      key={it.id}
-                      style={{
-                        marginTop: 8,
-                        paddingVertical: 6,
-                        borderBottomWidth: 1,
-                        borderBottomColor: theme.colors.outlineVariant,
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        gap: 12,
-                      }}
-                    >
-                      <View style={{ flex: 1 }}>
-                        <Text
-                          variant="bodyMedium"
-                          numberOfLines={2}
-                          style={{ color: theme.colors.onSurface, fontWeight: "600" }}
-                        >
-                          {title}
-                        </Text>
-                        <Text
-                          variant="bodySmall"
-                          style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
-                        >
-                          SL: {qty}
-                        </Text>
-                      </View>
-                      <View style={{ alignItems: "flex-end" }}>
-                        {hasDiscount && (
-                          <Text
-                            variant="bodySmall"
-                            style={{
-                              color: theme.colors.onSurfaceVariant,
-                              textDecorationLine: "line-through",
-                            }}
-                          >
-                            {original.toLocaleString("vi-VN")} đ
-                          </Text>
-                        )}
-                        <Text
-                          variant="bodySmall"
-                          style={{ color: theme.colors.primary, fontWeight: "700" }}
-                        >
-                          {price.toLocaleString("vi-VN")} đ
-                        </Text>
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-            )}
-
-            <View style={{ marginBottom: 16 , gap: 8}}>
-              <Text
-                variant="titleMedium"
-                style={{ fontWeight: "700", color: theme.colors.onSurface }}
-              >
-                Thông tin giao hàng
-              </Text>
-              <TextInput
-                mode="outlined"
-                label="Ghi chú (tuỳ chọn)"
-                value={note}
-                onChangeText={setNote}
-                style={{ marginTop: 8 }}
-              />
-              <TextInput
-                mode="outlined"
-                label="Số điện thoại"
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-                style={{ marginTop: 8 }}
-              />
-              <TextInput
-                mode="outlined"
-                label="Địa chỉ giao hàng"
-                value={address}
-                onChangeText={setAddress}
-                style={{ marginTop: 8 }}
-              />
-              <AppSelect
-                label="Tỉnh/Thành phố"
-                value={province}
-                onChange={(v) => {
-                  setProvince(v);
-                  setWard("");
-                }}
-                options={provinces.map((p) => ({ label: p.name, value: p.name }))}
-                placeholder="Chọn tỉnh/thành"
-              />
-              <View style={{ marginTop: 8 }}>
-                <AppSelect
-                  label="Phường/Xã"
-                  value={ward}
-                  onChange={setWard}
-                  disabled={!province || loadingWards}
-                  options={wards.map((w) => ({ label: w.name, value: w.name }))}
-                  placeholder={loadingWards ? "Đang tải..." : "Chọn phường/xã"}
-                />
-              </View>
-            </View>
-
-            <View style={{ marginBottom: 16 }}>
-              <Text
-                variant="titleMedium"
-                style={{ fontWeight: "700", color: theme.colors.onSurface }}
-              >
-                Phương thức thanh toán
-              </Text>
-              <RadioButton.Item 
-                label="Thanh toán khi nhận hàng (COD)"
-                value="cod"
-                status="checked"
-              />
-            </View>
-
-            <View style={{ marginBottom: 16 }}>
-              <Text
-                variant="titleMedium"
-                style={{ fontWeight: "700", color: theme.colors.onSurface }}
-              >
-                Mã giảm giá
-              </Text>
-              <TextInput
-                mode="outlined"
-                label="Nhập mã giảm giá (nếu có)"
-                value={promo}
-                onChangeText={setPromo}
-                style={{ marginTop: 8 }}
-              />
-            </View>
-
-            <View
-              style={{
-                marginTop: 4,
-                borderRadius: 16,
-                borderWidth: 1,
-                borderColor: theme.colors.outlineVariant,
-                backgroundColor: theme.colors.surfaceVariant,
-                padding: 12,
-                gap: 6,
-              }}
-            >
-              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  Tổng tiền sản phẩm
-                </Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurface }}>
-                  {itemAmountDisplay.toLocaleString("vi-VN")} đ
-                </Text>
-              </View>
-              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  Giảm giá
-                </Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurface }}>
-                  -{discountTotal.toLocaleString("vi-VN")} đ
-                </Text>
-              </View>
-              {hasItems && (
-                <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                    Phí vận chuyển
-                  </Text>
-                  <Text variant="bodySmall" style={{ color: theme.colors.onSurface }}>
-                    {shippingFeeDisplay.toLocaleString("vi-VN")} đ
-                  </Text>
-                </View>
-              )}
-              {promoDiscountDisplay > 0 && (
-                <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                    Mã giảm giá
-                  </Text>
-                  <Text variant="bodySmall" style={{ color: theme.colors.onSurface }}>
-                    -{promoDiscountDisplay.toLocaleString("vi-VN")} đ
-                  </Text>
-                  
-                </View>
-              )}
-              <View
-                style={{
-                  height: 1,
-                  backgroundColor: theme.colors.outlineVariant,
-                  marginVertical: 4,
-                }}
-              />
-              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                <Text
-                  variant="bodyMedium"
-                  style={{ fontWeight: "700", color: theme.colors.onSurface }}
-                >
-                  Tổng tiền
-                </Text>
-                <Text
-                  variant="bodyMedium"
-                  style={{ fontWeight: "700", color: theme.colors.onSurface }}
-                >
-                  {totalDisplay.toLocaleString("vi-VN")} đ
-                </Text>
-              </View>
-            </View>
-            {error && (
-              <Text
-                variant="bodySmall"
-                style={{ color: theme.colors.error, gap: 8, textAlign: "center", fontWeight: "700" }}
-              >
-                {error}
-              </Text>
-            )}
-
-            <View style={{ marginTop: 16 }}>
-              <Button
-                mode="contained"
-                disabled={!hasItems || placing}
-                loading={placing}
-                style={{ borderRadius: 999 }}
-                contentStyle={{ paddingVertical: 8 }}
-                onPress={handlePlaceOrder}
-              >
-                Xác nhận đặt hàng
-              </Button>
-            </View>
-          </FormCard>
-        </View>
-      </ScrollView>
+        <Button
+          mode="contained"
+          disabled={!hasItems || placing}
+          loading={placing}
+          style={{ borderRadius: 12 }}
+          contentStyle={{ paddingVertical: 6 }}
+          labelStyle={{ fontWeight: "700", fontSize: 15 }}
+          icon="check-circle-outline"
+          onPress={handlePlaceOrder}
+        >
+          Xác nhận đặt hàng
+        </Button>
+      </View>
     </Surface>
   );
 }
 
+function Section({
+  title,
+  icon,
+  theme,
+  children,
+}: {
+  title: string;
+  icon: string;
+  theme: any;
+  children: React.ReactNode;
+}) {
+  return (
+    <View
+      style={{
+        backgroundColor: theme.colors.surface,
+        borderRadius: 14,
+        padding: 14,
+        elevation: 1,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.06,
+        shadowRadius: 3,
+      }}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}>
+        <MaterialCommunityIcons name={icon as any} size={18} color={theme.colors.primary} />
+        <Text variant="titleSmall" style={{ fontWeight: "700" }}>{title}</Text>
+      </View>
+      {children}
+    </View>
+  );
+}
+
+function SummaryRow({
+  label,
+  value,
+  theme,
+  color,
+}: {
+  label: string;
+  value: string;
+  theme: any;
+  color?: string;
+}) {
+  return (
+    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+      <Text variant="bodySmall" style={{ color: color ?? theme.colors.onSurfaceVariant }}>{label}</Text>
+      <Text variant="bodySmall" style={{ color: color ?? theme.colors.onSurface }}>{value}</Text>
+    </View>
+  );
+}

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { View } from "react-native";
 import { Text, Surface, useTheme } from "react-native-paper";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootStack";
@@ -15,63 +16,95 @@ export function WelcomeScreen() {
   const theme = useTheme();
 
   useEffect(() => {
-    if (isReady && token) {
-      navigation.replace("Tabs");
-    }
+    if (isReady && token) navigation.replace("Tabs");
   }, [isReady, token, navigation]);
 
   if (!isReady) {
     return (
-      <Surface style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Surface
+        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+      >
         <Text variant="bodyLarge">Đang tải...</Text>
       </Surface>
     );
   }
 
   return (
-    <Surface style={{ flex: 1 }}>
+    <Surface
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+    >
       <View
         style={{
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          padding: 24,
+          padding: 32,
         }}
       >
-        <Text variant="displayMedium" style={{ marginBottom: 12, textAlign: "center" }}>
-          Chào mừng!
+        {/* Logo / branding */}
+        <View
+          style={{
+            width: 96,
+            height: 96,
+            borderRadius: 28,
+            backgroundColor: theme.colors.primaryContainer,
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 24,
+          }}
+        >
+          <MaterialCommunityIcons
+            name="book-open-page-variant"
+            size={48}
+            color={theme.colors.primary}
+          />
+        </View>
+
+        <Text
+          variant="headlineLarge"
+          style={{
+            fontWeight: "800",
+            color: theme.colors.onSurface,
+            marginBottom: 4,
+          }}
+        >
+          KeBook
         </Text>
         <Text
           variant="bodyLarge"
           style={{
-            marginBottom: 48,
-            textAlign: "center",
-            paddingHorizontal: 20,
             color: theme.colors.onSurfaceVariant,
+            textAlign: "center",
+            marginBottom: 48,
+            maxWidth: 280,
+            lineHeight: 22,
           }}
         >
-          Vui lòng đăng nhập hoặc đăng ký để tiếp tục
+          Khám phá hàng ngàn cuốn sách hay{"\n"}chỉ trong vài bước
         </Text>
 
-        <View style={{ width: "100%", maxWidth: 400 }}>
+        <View style={{ width: "100%", maxWidth: 340, gap: 12 }}>
           <AppButton
             mode="contained"
-            style={{ marginBottom: 16 }}
             onPress={() => navigation.navigate("Login")}
+            icon="login"
+            contentStyle={{ paddingVertical: 6 }}
+            style={{ borderRadius: 14 }}
           >
-            Đăng Nhập
+            Đăng nhập
           </AppButton>
 
           <AppButton
             mode="outlined"
-            style={{ marginBottom: 16 }}
             onPress={() => navigation.navigate("Register")}
+            icon="account-plus-outline"
+            contentStyle={{ paddingVertical: 6 }}
+            style={{ borderRadius: 14 }}
           >
-            Đăng Ký
+            Tạo tài khoản
           </AppButton>
         </View>
       </View>
     </Surface>
   );
 }
-
