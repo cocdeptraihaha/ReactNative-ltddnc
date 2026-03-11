@@ -14,33 +14,49 @@ export function ProductCard(props: {
   const finalPrice = (b.final_price ?? b.selling_price) ?? null;
   const originalPrice = (b.original_price ?? b.selling_price) ?? null;
   const fullTitle = (b.title ?? "Untitled").trim();
-  const shortTitle = fullTitle.length > 20 ? `${fullTitle.slice(0, 20)}…` : fullTitle;
+  const shortTitle =
+    fullTitle.length > 28 ? `${fullTitle.slice(0, 28)}…` : fullTitle;
+
+  const discountPct = b.has_discount
+    ? b.discount_percent ??
+      (b.discount_amount && b.selling_price
+        ? Math.round((b.discount_amount / b.selling_price) * 100)
+        : null)
+    : null;
 
   return (
     <Pressable
       onPress={props.onPress}
       style={({ pressed }) => ({
         flex: 1,
-        opacity: pressed ? 0.92 : 1,
+        opacity: pressed ? 0.88 : 1,
+        transform: [{ scale: pressed ? 0.97 : 1 }],
       })}
     >
       <View
         style={{
           width: "100%",
-          borderRadius: 18,
+          borderRadius: 14,
           backgroundColor: theme.colors.surface,
-          borderWidth: 1,
-          borderColor: theme.colors.outline,
           overflow: "hidden",
-          // Cố định chiều cao để card hiển thị đồng đều trong grid
-          height: 260,
+          height: 240,
+          elevation: 2,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.08,
+          shadowRadius: 4,
         }}
       >
+        {/* ── Image ── */}
         <View style={{ position: "relative" }}>
           {imageUrl ? (
             <Image
               source={{ uri: imageUrl }}
-              style={{ width: "100%", height: 140, backgroundColor: theme.colors.surfaceVariant }}
+              style={{
+                width: "100%",
+                height: 140,
+                backgroundColor: theme.colors.surfaceVariant,
+              }}
               contentFit="cover"
               transition={150}
             />
@@ -59,101 +75,77 @@ export function ProductCard(props: {
                 size={34}
                 color={theme.colors.onSurfaceVariant}
               />
-              <Text
-                variant="labelSmall"
-                style={{ color: theme.colors.onSurfaceVariant, marginTop: 8, fontSize: 10 }}
-                numberOfLines={1}
-              >
-                {shortTitle}
-              </Text>
             </View>
           )}
 
-          <View
-            style={{
-              position: "absolute",
-              top: 10,
-              right: 10,
-              width: 34,
-              height: 34,
-              borderRadius: 17,
-              backgroundColor: "rgba(255,255,255,0.92)",
-              alignItems: "center",
-              justifyContent: "center",
-              borderWidth: 1,
-              borderColor: theme.colors.outline,
-            }}
-          >
-            <MaterialCommunityIcons name="heart-outline" size={18} color={theme.colors.onSurface} />
-          </View>
+          {discountPct != null && discountPct > 0 && (
+            <View
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                backgroundColor: theme.colors.error,
+                paddingHorizontal: 8,
+                paddingVertical: 3,
+                borderBottomRightRadius: 10,
+              }}
+            >
+              <Text
+                variant="labelSmall"
+                style={{ color: "#fff", fontWeight: "800", fontSize: 11 }}
+              >
+                -{Math.round(discountPct)}%
+              </Text>
+            </View>
+          )}
         </View>
 
-        <View style={{ padding: 12, flex: 1 }}>
-          <View
+        {/* ── Info ── */}
+        <View style={{ padding: 10, flex: 1, justifyContent: "space-between" }}>
+          <Text
+            variant="bodySmall"
             style={{
-              flexDirection: "row",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: 6,
+              color: theme.colors.onSurface,
+              fontWeight: "600",
+              fontSize: 12,
+              lineHeight: 16,
             }}
+            numberOfLines={2}
           >
-            <View style={{ flex: 1 }}>
-              <Text
-                variant="bodySmall"
-                style={{ color: theme.colors.onSurface, fontWeight: "600", fontSize: 11 }}
-                numberOfLines={1}
-              >
-                {shortTitle}
-              </Text>
-
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 }}>
-                <MaterialCommunityIcons name="star" size={13} color="#F2B01E" />
-                <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, fontSize: 10 }}>
-                  4.6 
-                </Text>
-              </View>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 }}>
-                <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, fontSize: 10 }}>
-                  Đã bán 120
-                </Text>
-              </View>
-            </View>
-
-            {b.has_discount && b.discount_percent != null && (
-              <Text variant="labelSmall" style={{ color: theme.colors.error, fontSize: 10 }}>
-                -{Math.round(b.discount_percent ?? 0)}%
-              </Text>
-            )}
-            {b.has_discount && b.discount_percent == null && (
-              <Text variant="labelSmall" style={{ color: theme.colors.error, fontSize: 10 }}>
-                -{Math.round((b.discount_amount ?? 0) / (b.selling_price ?? 1) * 100)}%
-              </Text>
-            )}
-          </View>
+            {shortTitle}
+          </Text>
 
           {finalPrice != null && (
-            <View style={{ marginTop: 10 }}>
-              <View style={{ flexDirection: "row", alignItems: "baseline", gap: 8 }}>
-                {b.has_discount && originalPrice != null && (
-                  <Text
-                    variant="bodySmall"
-                    style={{
-                      position: "absolute",
-                      left: 0,
-                      color: theme.colors.onSurfaceVariant,
-                      textDecorationLine: "line-through",
-                    }}
-                  >
-                    {originalPrice.toLocaleString("vi-VN")} đ
-                  </Text>
-                )}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+                marginTop: 4,
+              }}
+            >
+              <Text
+                variant="titleSmall"
+                style={{
+                  color: theme.colors.primary,
+                  fontWeight: "800",
+                  fontSize: 13,
+                }}
+              >
+                {finalPrice.toLocaleString("vi-VN")}đ
+              </Text>
+              {b.has_discount && originalPrice != null && originalPrice > (finalPrice ?? 0) && (
                 <Text
-                  variant="titleSmall"
-                  style={{ position: "absolute", right: 0, color: theme.colors.primary, fontWeight: "600" , fontSize: 12}}
+                  variant="bodySmall"
+                  style={{
+                    color: theme.colors.onSurfaceVariant,
+                    textDecorationLine: "line-through",
+                    fontSize: 10,
+                  }}
                 >
-                  {finalPrice.toLocaleString("vi-VN")} đ
+                  {originalPrice.toLocaleString("vi-VN")}đ
                 </Text>
-              </View>
+              )}
             </View>
           )}
         </View>
@@ -161,4 +153,3 @@ export function ProductCard(props: {
     </Pressable>
   );
 }
-
