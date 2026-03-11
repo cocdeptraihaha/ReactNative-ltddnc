@@ -270,14 +270,16 @@ export function HomeScreen() {
               <FlatList
                 data={topSelling}
                 keyExtractor={(item) => `top-${item.id}`}
-                numColumns={2}
-                scrollEnabled={false}
-                contentContainerStyle={{ paddingTop: 6 }}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingTop: 6, paddingRight: 4 }}
                 renderItem={({ item }) => (
-                  <ProductCard
-                    book={item}
-                    onPress={() => navigation.navigate("BookDetail", { bookId: item.id })}
-                  />
+                  <View style={{ width: 220, marginRight: 12 }}>
+                    <ProductCard
+                      book={item}
+                      onPress={() => navigation.navigate("BookDetail", { bookId: item.id })}
+                    />
+                  </View>
                 )}
               />
             </View>
