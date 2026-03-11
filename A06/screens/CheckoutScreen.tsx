@@ -17,6 +17,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RouteProp } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { getMyCart, type CartItemWithBook } from "../lib/cart";
+import { getBook } from "../lib/books";
 import { checkoutFromCart, type Order, type OrderCheckoutSummary } from "../lib/orders";
 import type { RootStackParamList } from "../navigation/RootStack";
 import { AppSelect } from "../components/AppSelect";
@@ -40,6 +41,7 @@ export function CheckoutScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
+  const [fullName, setFullName] = useState("");
   const [note, setNote] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -55,6 +57,7 @@ export function CheckoutScreen() {
 
   useEffect(() => {
     if (user) {
+      setFullName((user as any).full_name ?? "");
       setPhone((user as any).phone_number ?? "");
       setAddress((user as any).address ?? "");
       setProvince((user as any).province ?? "");
@@ -99,16 +102,29 @@ export function CheckoutScreen() {
       try {
         setLoading(true); setError(null);
         if (params?.items && params.items.length > 0) {
+          const requestedItems = params.items as { bookId: number; quantity: number }[];
           const data = await getMyCart(token);
           const byBookId = new Map(data.filter((it) => it.book_id != null).map((it) => [it.book_id, it]));
-          setCartItems(
-            (params.items as { bookId: number; quantity: number }[])
-              .map((it) => {
-                const row = byBookId.get(it.bookId);
-                return row ? { ...row, quantity: it.quantity } : null;
-              })
-              .filter(Boolean) as CartItemWithBook[],
-          );
+          const resolved: CartItemWithBook[] = [];
+          for (const it of requestedItems) {
+            const row = byBookId.get(it.bookId);
+            if (row) {
+              resolved.push({ ...row, quantity: it.quantity });
+            } else {
+              const book = await getBook(it.bookId);
+              resolved.push({
+                id: -it.bookId,
+                book_id: book.id,
+                quantity: it.quantity,
+                title: book.title ?? `Sách #${book.id}`,
+                price: book.final_price ?? book.selling_price ?? 0,
+                original_price: book.original_price ?? book.selling_price ?? 0,
+                image_url: book.image_url ?? null,
+                stock_quantity: book.stock_quantity ?? 0,
+              });
+            }
+          }
+          setCartItems(resolved);
         } else {
           setCartItems(await getMyCart(token));
         }
@@ -154,6 +170,7 @@ export function CheckoutScreen() {
         ? (params.items as { bookId: number; quantity: number }[]).map((it) => ({ book_id: it.bookId, quantity: it.quantity }))
         : undefined;
       await checkoutFromCart(token, {
+        full_name: fullName.trim() || undefined,
         note: note.trim() || undefined,
         phone_number: phone.trim(),
         shipping_address: address.trim(),
@@ -229,6 +246,7 @@ export function CheckoutScreen() {
         {/* ── Shipping info ── */}
         <Section title="Thông tin giao hàng" icon="truck-outline" theme={theme}>
           <View style={{ gap: 10 }}>
+            <TextInput mode="outlined" label="Họ tên người nhận" value={fullName} onChangeText={setFullName} dense />
             <TextInput mode="outlined" label="Số điện thoại" value={phone} onChangeText={setPhone} keyboardType="phone-pad" dense />
             <TextInput mode="outlined" label="Địa chỉ" value={address} onChangeText={setAddress} dense />
             <AppSelect
