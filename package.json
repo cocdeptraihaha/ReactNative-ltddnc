@@ -6,6 +6,7 @@
     "A03",
     "A04",
     "A05",
+    "A06",
     "BTTuan01"
   ],
   "scripts": {
@@ -13,6 +14,7 @@
     "a03": "npm run start -w a03",
     "a04": "npm run start -w a04",
     "a05": "npm run start -w a05",
+    "a06": "npm run start -w a06",
     "bttuan01": "npm run start -w bttuan01"
   }
 }
