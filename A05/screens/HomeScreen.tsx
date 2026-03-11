@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { FlatList, Pressable, ScrollView, View } from "react-native";
 import { ActivityIndicator, Surface, Text, useTheme } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
-import type { RootStackParamList } from "../navigation/RootStack";
 import { useAuth } from "../context/AuthContext";
 import { HomeHeader } from "../components/HomeHeader";
 import { FormCard } from "../components/FormCard";
@@ -17,7 +16,6 @@ import {
   type Page,
 } from "../lib/books";
 import { getCategories, type Category } from "../lib/categories";
-import { formatDateVN } from "../utils/date";
 type HomeNav = any;
 
 export function HomeScreen() {
@@ -271,7 +269,7 @@ export function HomeScreen() {
                 data={topSelling}
                 keyExtractor={(item) => `top-${item.id}`}
                 horizontal
-                showsHorizontalScrollIndicator={false}
+                showsHorizontalScrollIndicator={true}
                 contentContainerStyle={{ paddingTop: 6, paddingRight: 4 }}
                 renderItem={({ item }) => (
                   <View style={{ width: 220, marginRight: 12 }}>
@@ -318,6 +316,37 @@ export function HomeScreen() {
               <FlatList
                 data={topDiscounted}
                 keyExtractor={(item) => `disc-${item.id}`}
+                numColumns={2}
+                scrollEnabled={false}
+                contentContainerStyle={{ paddingTop: 6 }}
+                renderItem={({ item }) => (
+                  <ProductCard
+                    book={item}
+                    onPress={() => navigation.navigate("BookDetail", { bookId: item.id })}
+                  />
+                )}
+              />
+            </View>
+
+            <View style={{ marginTop: 24 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text
+                  variant="titleMedium"
+                  style={{ fontWeight: "800", color: theme.colors.onSurface }}
+                >
+                  Tất cả sách
+                </Text>
+              </View>
+
+              <FlatList
+                data={books}
+                keyExtractor={(item) => String(item.id)}
                 numColumns={2}
                 scrollEnabled={false}
                 contentContainerStyle={{ paddingTop: 6 }}
