@@ -5,9 +5,12 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import { getMyCart, type CartItemWithBook } from "../lib/cart";
-import { checkoutFromCart, type Order } from "../lib/orders";
+import { checkoutFromCart, type Order, type OrderCheckoutSummary } from "../lib/orders";
 import type { RootStackParamList } from "../navigation/RootStack";
 import { FormCard } from "../components/FormCard";
+import { AppSelect } from "../components/AppSelect";
+import { getProvinces, getWards, type ProvinceItem, type WardItem } from "../lib/addresses";
+import { previewPromotion } from "../lib/promotions";
 
 type Nav = NativeStackNavigationProp<RootStackParamList, "Checkout">;
 
@@ -23,15 +26,94 @@ export function CheckoutScreen() {
   const [note, setNote] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [province, setProvince] = useState("");
+  const [ward, setWard] = useState("");
   const [promo, setPromo] = useState("");
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
+  const [serverSummary, setServerSummary] = useState<OrderCheckoutSummary | null>(null);
+  const [provinces, setProvinces] = useState<ProvinceItem[]>([]);
+  const [wards, setWards] = useState<WardItem[]>([]);
+  const [loadingWards, setLoadingWards] = useState(false);
+  const [promoPreviewDiscount, setPromoPreviewDiscount] = useState(0);
+  const [promoChecking, setPromoChecking] = useState(false);
 
   useEffect(() => {
     if (user) {
       setPhone((user as any).phone_number ?? "");
       setAddress((user as any).address ?? "");
+      setProvince((user as any).province ?? "");
+      setWard((user as any).ward ?? "");
     }
   }, [user]);
+
+  // Tự động debounce gọi API check mã giảm giá khi người dùng ngừng nhập
+  useEffect(() => {
+    const code = promo.trim();
+    if (!code) {
+      setPromoPreviewDiscount(0);
+      return;
+    }
+    if (!isReady || !token) return;
+    if (!cartItems.length) return;
+
+    const subtotal = cartItems.reduce((sum, it) => {
+      const price = it.price ?? 0;
+      const original = it.original_price ?? it.price ?? 0;
+      const qty = it.quantity ?? 0;
+      return sum + (original - price) * qty + price * qty;
+    }, 0);
+
+    if (subtotal <= 0) {
+      setPromoPreviewDiscount(0);
+      return;
+    }
+
+    const handle = setTimeout(async () => {
+      try {
+        setPromoChecking(true);
+        const res = await previewPromotion(code, subtotal);
+        if (!res.valid) {
+          setPromoPreviewDiscount(0);
+          setError(res.message || "Mã giảm giá không hợp lệ.");
+        } else {
+          setPromoPreviewDiscount(res.discount_amount);
+          setError(null);
+        }
+      } catch (e) {
+        setPromoPreviewDiscount(0);
+        if (e instanceof Error) {
+          setError(e.message);
+        } else {
+          setError("Không thể kiểm tra mã giảm giá.");
+        }
+      } finally {
+        setPromoChecking(false);
+      }
+    }, 500); // 0.5s sau khi ngừng gõ
+
+    return () => clearTimeout(handle);
+  }, [promo, isReady, token, cartItems]);
+
+  useEffect(() => {
+    getProvinces().then(setProvinces).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!province.trim()) {
+      setWards([]);
+      return;
+    }
+    const p = provinces.find((x) => x.name === province);
+    if (!p) {
+      setWards([]);
+      return;
+    }
+    setLoadingWards(true);
+    getWards(p.code)
+      .then(setWards)
+      .catch(() => setWards([]))
+      .finally(() => setLoadingWards(false));
+  }, [province, provinces]);
 
   useEffect(() => {
     if (!isReady || !token) return;
@@ -75,6 +157,12 @@ export function CheckoutScreen() {
   }
   const grandTotal = itemAmount - discountTotal + (hasItems ? shippingFee : 0);
 
+  const itemAmountDisplay = serverSummary?.item_amount ?? itemAmount;
+  const shippingFeeDisplay = serverSummary?.shipping_fee ?? (hasItems ? shippingFee : 0);
+  const promoDiscountDisplay = serverSummary?.discount_total ?? promoPreviewDiscount;
+  const totalDisplay =
+    serverSummary?.total_amount ?? (grandTotal - promoPreviewDiscount);
+
   const handlePlaceOrder = async () => {
     if (!token) return;
     if (!hasItems) {
@@ -88,17 +176,26 @@ export function CheckoutScreen() {
     try {
       setPlacing(true);
       setError(null);
-      const order = await checkoutFromCart(token, {
+      const summary = await checkoutFromCart(token, {
         note: note.trim() || undefined,
         phone_number: phone.trim(),
         shipping_address: address.trim(),
+        province: province.trim() || undefined,
+        ward: ward.trim() || undefined,
         promotion_code: promo.trim() || undefined,
       });
-      setLastOrder(order);
+      setLastOrder(summary.order);
+      setServerSummary(summary);
       // Sau khi đặt hàng thành công, quay lại tab chính (Home)
       navigation.navigate("Tabs");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Đặt hàng thất bại. Vui lòng thử lại.");
+      if (e instanceof Error) {
+        const parts = e.message.split("\n");
+        const shortMsg = parts[parts.length - 1] || e.message;
+        setError(shortMsg);
+      } else {
+        setError("Đặt hàng thất bại. Vui lòng thử lại.");
+      }
     } finally {
       setPlacing(false);
     }
@@ -129,15 +226,6 @@ export function CheckoutScreen() {
               <View style={{ paddingVertical: 16, alignItems: "center" }}>
                 <ActivityIndicator />
               </View>
-            )}
-
-            {error && (
-              <Text
-                variant="bodySmall"
-                style={{ color: theme.colors.error, marginBottom: 8 }}
-              >
-                {error}
-              </Text>
             )}
 
             {hasItems && (
@@ -207,7 +295,7 @@ export function CheckoutScreen() {
               </View>
             )}
 
-            <View style={{ marginBottom: 16 }}>
+            <View style={{ marginBottom: 16 , gap: 8}}>
               <Text
                 variant="titleMedium"
                 style={{ fontWeight: "700", color: theme.colors.onSurface }}
@@ -234,9 +322,28 @@ export function CheckoutScreen() {
                 label="Địa chỉ giao hàng"
                 value={address}
                 onChangeText={setAddress}
-                multiline
                 style={{ marginTop: 8 }}
               />
+              <AppSelect
+                label="Tỉnh/Thành phố"
+                value={province}
+                onChange={(v) => {
+                  setProvince(v);
+                  setWard("");
+                }}
+                options={provinces.map((p) => ({ label: p.name, value: p.name }))}
+                placeholder="Chọn tỉnh/thành"
+              />
+              <View style={{ marginTop: 8 }}>
+                <AppSelect
+                  label="Phường/Xã"
+                  value={ward}
+                  onChange={setWard}
+                  disabled={!province || loadingWards}
+                  options={wards.map((w) => ({ label: w.name, value: w.name }))}
+                  placeholder={loadingWards ? "Đang tải..." : "Chọn phường/xã"}
+                />
+              </View>
             </View>
 
             <View style={{ marginBottom: 16 }}>
@@ -246,7 +353,7 @@ export function CheckoutScreen() {
               >
                 Phương thức thanh toán
               </Text>
-              <RadioButton.Item
+              <RadioButton.Item 
                 label="Thanh toán khi nhận hàng (COD)"
                 value="cod"
                 status="checked"
@@ -285,7 +392,7 @@ export function CheckoutScreen() {
                   Tổng tiền sản phẩm
                 </Text>
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurface }}>
-                  {itemAmount.toLocaleString("vi-VN")} đ
+                  {itemAmountDisplay.toLocaleString("vi-VN")} đ
                 </Text>
               </View>
               <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
@@ -293,7 +400,7 @@ export function CheckoutScreen() {
                   Giảm giá
                 </Text>
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurface }}>
-                  {discountTotal.toLocaleString("vi-VN")} đ
+                  -{discountTotal.toLocaleString("vi-VN")} đ
                 </Text>
               </View>
               {hasItems && (
@@ -302,8 +409,19 @@ export function CheckoutScreen() {
                     Phí vận chuyển
                   </Text>
                   <Text variant="bodySmall" style={{ color: theme.colors.onSurface }}>
-                    {shippingFee.toLocaleString("vi-VN")} đ
+                    {shippingFeeDisplay.toLocaleString("vi-VN")} đ
                   </Text>
+                </View>
+              )}
+              {promoDiscountDisplay > 0 && (
+                <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                    Mã giảm giá
+                  </Text>
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurface }}>
+                    -{promoDiscountDisplay.toLocaleString("vi-VN")} đ
+                  </Text>
+                  
                 </View>
               )}
               <View
@@ -324,10 +442,18 @@ export function CheckoutScreen() {
                   variant="bodyMedium"
                   style={{ fontWeight: "700", color: theme.colors.onSurface }}
                 >
-                  {grandTotal.toLocaleString("vi-VN")} đ
+                  {totalDisplay.toLocaleString("vi-VN")} đ
                 </Text>
               </View>
             </View>
+            {error && (
+              <Text
+                variant="bodySmall"
+                style={{ color: theme.colors.error, gap: 8, textAlign: "center", fontWeight: "700" }}
+              >
+                {error}
+              </Text>
+            )}
 
             <View style={{ marginTop: 16 }}>
               <Button

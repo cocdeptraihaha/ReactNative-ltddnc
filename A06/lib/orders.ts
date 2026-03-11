@@ -17,18 +17,28 @@ export type Order = {
   order_items?: OrderItem[];
 };
 
+export type OrderCheckoutSummary = {
+  order: Order;
+  item_amount: number;
+  discount_total: number;
+  shipping_fee: number;
+  total_amount: number;
+};
+
 export type CheckoutPayload = {
   note?: string | null;
   phone_number: string;
   shipping_address: string;
+  province?: string | null;
+  ward?: string | null;
   promotion_code?: string | null;
 };
 
 export async function checkoutFromCart(
   token: string,
   payload: CheckoutPayload,
-): Promise<Order> {
-  return apiFetch<Order>("/orders/checkout", {
+): Promise<OrderCheckoutSummary> {
+  return apiFetch<OrderCheckoutSummary>("/orders/checkout", {
     method: "POST",
     body: JSON.stringify(payload),
     token,
