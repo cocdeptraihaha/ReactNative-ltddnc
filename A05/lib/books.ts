@@ -10,6 +10,7 @@ export type Book = {
   discount_percent?: number | null;
   discount_amount?: number | null;
   has_discount?: boolean;
+  image_url?: string | null;
   stock_quantity?: number | null;
   code?: string | null;
   edition?: number | null;

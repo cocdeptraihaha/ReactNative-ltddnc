@@ -1,11 +1,7 @@
-// IMPORTANT: must include scheme (http/https), otherwise fetch will fail.
-// Native (Expo Go) dùng IP LAN để gọi backend local; Web dùng API deploy sẵn để tránh lỗi mạng/CORS.
-const LOCAL_API_BASE = "http://192.168.1.201:8000/api/v1";
-const REMOTE_API_BASE = "https://kebook.apn.leapcell.app/api/v1";
 
-export const API_BASE =
-  // document chỉ tồn tại trên web; native (iOS/Android) không có
-  typeof document === "undefined" ? LOCAL_API_BASE : REMOTE_API_BASE;
+// export const API_BASE = "https://kebook.apn.leapcell.app/api/v1";
+// IMPORTANT: must include scheme (http/https), otherwise fetch will fail.
+export const API_BASE = "http://192.168.1.201:8000/api/v1";
 
 
 export type UploadAvatarResponse = {

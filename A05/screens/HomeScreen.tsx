@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { FlatList, Pressable, ScrollView, View } from "react-native";
 import { ActivityIndicator, Surface, Text, useTheme } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import type { RootStackParamList } from "../navigation/RootStack";
@@ -8,6 +8,7 @@ import { HomeHeader } from "../components/HomeHeader";
 import { FormCard } from "../components/FormCard";
 import { AppButton } from "../components/AppButton";
 import { CategorySlider } from "../components/CategorySlider";
+import { ProductCard } from "../components/ProductCard";
 import { getBooks, type Book, type Page } from "../lib/books";
 import { getCategories, type Category } from "../lib/categories";
 import { formatDateVN } from "../utils/date";
@@ -79,6 +80,8 @@ export function HomeScreen() {
       }
     })();
   }, [page, size, searchQuery, selectedCategoryId]);
+
+  const books = booksPage?.items ?? [];
 
   if (!isReady || !token) {
     return (
@@ -153,6 +156,27 @@ export function HomeScreen() {
               />
             )}
 
+            <View
+              style={{
+                marginTop: 14,
+                padding: 14,
+                borderRadius: 18,
+                backgroundColor: theme.colors.primaryContainer,
+                borderWidth: 1,
+                borderColor: theme.colors.primary,
+              }}
+            >
+              <Text variant="titleMedium" style={{ color: theme.colors.onPrimaryContainer, fontWeight: "800" }}>
+                Discover your next favorite book
+              </Text>
+              <Text
+                variant="bodySmall"
+                style={{ color: theme.colors.onPrimaryContainer, marginTop: 6, opacity: 0.9 }}
+              >
+                Search, pick a category, then explore popular picks.
+              </Text>
+            </View>
+
             {loadingBooks && (
               <View style={{ marginVertical: 8, alignItems: "center" }}>
                 <ActivityIndicator />
@@ -168,85 +192,32 @@ export function HomeScreen() {
               </Text>
             )}
 
-            {booksPage?.items.map((b) => (
-              <Pressable
-                key={b.id}
-                onPress={() => navigation.navigate("BookDetail", { bookId: b.id })}
-              >
-                <View
-                  style={{
-                    paddingVertical: 8,
-                    borderBottomWidth: 1,
-                    borderBottomColor: theme.colors.outlineVariant,
-                  }}
-                >
-                  <Text
-                    variant="titleMedium"
-                    style={{ fontWeight: "600", color: theme.colors.onSurface }}
-                  >
-                    {b.title ?? "Untitled book"}
+            <View style={{ marginTop: 10 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <Text variant="titleMedium" style={{ fontWeight: "800", color: theme.colors.onSurface }}>
+                  Popular
+                </Text>
+                <Pressable onPress={() => {}}>
+                  <Text variant="labelLarge" style={{ color: theme.colors.primary, fontWeight: "700" }}>
+                    See All
                   </Text>
-                  {b.author && (
-                    <Text
-                      variant="bodyMedium"
-                      style={{ color: theme.colors.onSurfaceVariant }}
-                    >
-                      {b.author}
-                    </Text>
-                  )}
-                  {(b.final_price ?? b.selling_price) != null && (
-                    <View style={{ marginTop: 6, flexDirection: "row", alignItems: "center", gap: 10 }}>
-                      {b.has_discount && (b.discount_percent != null || b.discount_amount != null) && (
-                        <View
-                          style={{
-                            paddingHorizontal: 8,
-                            paddingVertical: 3,
-                            borderRadius: 999,
-                            backgroundColor: theme.colors.errorContainer,
-                            borderWidth: 1,
-                            borderColor: theme.colors.error,
-                          }}
-                        >
-                          <Text variant="labelSmall" style={{ color: theme.colors.onErrorContainer }}>
-                            {b.discount_percent != null
-                              ? `-${Math.round(b.discount_percent)}%`
-                              : `- ${Math.round(b.discount_amount ?? 0).toLocaleString("vi-VN")}đ`}
-                          </Text>
-                        </View>
-                      )}
+                </Pressable>
+              </View>
 
-                      <View style={{ flexDirection: "row", alignItems: "baseline", gap: 10 }}>
-                        {b.has_discount && (b.original_price ?? b.selling_price) != null && (
-                          <Text
-                            variant="bodySmall"
-                            style={{
-                              color: theme.colors.onSurfaceVariant,
-                              textDecorationLine: "line-through",
-                            }}
-                          >
-                            {(b.original_price ?? b.selling_price)?.toLocaleString("vi-VN")} đ
-                          </Text>
-                        )}
-                        <Text
-                          variant="bodyMedium"
-                          style={{ color: theme.colors.primary, fontWeight: "700" }}
-                        >
-                          {(b.final_price ?? b.selling_price)?.toLocaleString("vi-VN")} đ
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-                  {b.publication_date && (
-                    <Text
-                      variant="bodySmall"
-                      style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
-                    >
-                      Published: {formatDateVN(new Date(b.publication_date))}
-                    </Text>
-                  )}
-                </View>
-              </Pressable>
-            ))}
+              <FlatList
+                data={books}
+                keyExtractor={(item) => String(item.id)}
+                numColumns={2}
+                scrollEnabled={false}
+                contentContainerStyle={{ paddingTop: 6 }}
+                renderItem={({ item }) => (
+                  <ProductCard
+                    book={item}
+                    onPress={() => navigation.navigate("BookDetail", { bookId: item.id })}
+                  />
+                )}
+              />
+            </View>
 
             {booksPage && (
               <View

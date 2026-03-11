@@ -6,4 +6,5 @@ export { AppDateInput } from "./AppDateInput";
 export { FormCard } from "./FormCard";
 export { ProfileHeader } from "./ProfileHeader";
 export { CategorySlider } from "./CategorySlider";
+export { ProductCard } from "./ProductCard";
 
