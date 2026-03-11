@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { Image } from "expo-image";
-import { ActivityIndicator, Surface, Text, useTheme } from "react-native-paper";
+import { ActivityIndicator, Appbar, Surface, Text, useTheme } from "react-native-paper";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RouteProp } from "@react-navigation/native";
@@ -9,7 +9,6 @@ import type { RootStackParamList } from "../navigation/RootStack";
 import { getBook, type BookWithDetail } from "../lib/books";
 import { formatDateVN } from "../utils/date";
 import { FormCard } from "../components/FormCard";
-import { HomeHeader } from "../components/HomeHeader";
 
 type BookDetailNav = NativeStackNavigationProp<RootStackParamList, "BookDetail">;
 type BookDetailRoute = RouteProp<RootStackParamList, "BookDetail">;
@@ -88,15 +87,17 @@ export function BookDetailScreen() {
 
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <HomeHeader
-        title={book.title ?? "Book detail"}
-        userDisplayName={undefined}
-        menuVisible={false}
-        onMenuDismiss={() => {}}
-        onMenuOpen={() => {}}
-        onProfile={undefined}
-        onLogout={handleBack}
-      />
+      <Appbar.Header
+        elevated
+        theme={{ colors: { primaryContainer: theme.colors.primaryContainer } }}
+        style={{
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.outlineVariant,
+        }}
+      >
+        <Appbar.BackAction onPress={handleBack} />
+        <Appbar.Content title={book.title ?? "Book detail"} />
+      </Appbar.Header>
 
       <ScrollView
         style={{ flex: 1 }}
@@ -137,25 +138,65 @@ export function BookDetailScreen() {
               </View>
             )}
 
-              <InfoRow label="Author" value={book.author} />
-              <InfoRow
-                label="Price"
-                value={
-                  book.selling_price != null
-                    ? `${book.selling_price.toLocaleString("vi-VN")} đ`
-                    : null
-                }
-              />
-              <InfoRow label="Code" value={book.code} />
-              <InfoRow label="Edition" value={book.edition} />
-              <InfoRow
-                label="Publication date"
-                value={
-                  book.publication_date
-                    ? formatDateVN(new Date(book.publication_date))
-                    : null
-                }
-              />
+            <InfoRow label="Author" value={book.author} />
+
+            {(book.final_price ?? book.selling_price) != null && (
+              <View style={{ marginBottom: 12 }}>
+                <View style={{ marginBottom: 2 }}>
+                  <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                    Price
+                  </Text>
+                </View>
+
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                  {book.has_discount && (book.discount_percent != null || book.discount_amount != null) && (
+                    <View
+                      style={{
+                        paddingHorizontal: 8,
+                        paddingVertical: 3,
+                        borderRadius: 999,
+                        backgroundColor: theme.colors.errorContainer,
+                        borderWidth: 1,
+                        borderColor: theme.colors.error,
+                      }}
+                    >
+                      <Text variant="labelSmall" style={{ color: theme.colors.onErrorContainer }}>
+                        {book.discount_percent != null
+                          ? `-${Math.round(book.discount_percent)}%`
+                          : `- ${Math.round(book.discount_amount ?? 0).toLocaleString("vi-VN")}đ`}
+                      </Text>
+                    </View>
+                  )}
+
+                  {book.has_discount && (book.original_price ?? book.selling_price) != null && (
+                    <Text
+                      variant="bodySmall"
+                      style={{
+                        color: theme.colors.onSurfaceVariant,
+                        textDecorationLine: "line-through",
+                      }}
+                    >
+                      {(book.original_price ?? book.selling_price)?.toLocaleString("vi-VN")} đ
+                    </Text>
+                  )}
+
+                  <Text variant="bodyLarge" style={{ color: theme.colors.primary, fontWeight: "800" }}>
+                    {(book.final_price ?? book.selling_price)?.toLocaleString("vi-VN")} đ
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            <InfoRow label="Code" value={book.code} />
+            <InfoRow label="Edition" value={book.edition} />
+            <InfoRow
+              label="Publication date"
+              value={
+                book.publication_date
+                  ? formatDateVN(new Date(book.publication_date))
+                  : null
+              }
+            />
             <InfoRow label="Stock quantity" value={book.stock_quantity} />
 
             {d && (

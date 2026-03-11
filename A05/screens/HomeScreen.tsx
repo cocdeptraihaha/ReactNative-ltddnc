@@ -194,13 +194,47 @@ export function HomeScreen() {
                       {b.author}
                     </Text>
                   )}
-                  {b.selling_price != null && (
-                    <Text
-                      variant="bodyMedium"
-                      style={{ color: theme.colors.primary, marginTop: 2 }}
-                    >
-                      {b.selling_price.toLocaleString("vi-VN")} đ
-                    </Text>
+                  {(b.final_price ?? b.selling_price) != null && (
+                    <View style={{ marginTop: 6, flexDirection: "row", alignItems: "center", gap: 10 }}>
+                      {b.has_discount && (b.discount_percent != null || b.discount_amount != null) && (
+                        <View
+                          style={{
+                            paddingHorizontal: 8,
+                            paddingVertical: 3,
+                            borderRadius: 999,
+                            backgroundColor: theme.colors.errorContainer,
+                            borderWidth: 1,
+                            borderColor: theme.colors.error,
+                          }}
+                        >
+                          <Text variant="labelSmall" style={{ color: theme.colors.onErrorContainer }}>
+                            {b.discount_percent != null
+                              ? `-${Math.round(b.discount_percent)}%`
+                              : `- ${Math.round(b.discount_amount ?? 0).toLocaleString("vi-VN")}đ`}
+                          </Text>
+                        </View>
+                      )}
+
+                      <View style={{ flexDirection: "row", alignItems: "baseline", gap: 10 }}>
+                        {b.has_discount && (b.original_price ?? b.selling_price) != null && (
+                          <Text
+                            variant="bodySmall"
+                            style={{
+                              color: theme.colors.onSurfaceVariant,
+                              textDecorationLine: "line-through",
+                            }}
+                          >
+                            {(b.original_price ?? b.selling_price)?.toLocaleString("vi-VN")} đ
+                          </Text>
+                        )}
+                        <Text
+                          variant="bodyMedium"
+                          style={{ color: theme.colors.primary, fontWeight: "700" }}
+                        >
+                          {(b.final_price ?? b.selling_price)?.toLocaleString("vi-VN")} đ
+                        </Text>
+                      </View>
+                    </View>
                   )}
                   {b.publication_date && (
                     <Text

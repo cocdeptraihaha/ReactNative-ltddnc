@@ -5,6 +5,11 @@ export type Book = {
   title?: string | null;
   author?: string | null;
   selling_price?: number | null;
+  original_price?: number | null;
+  final_price?: number | null;
+  discount_percent?: number | null;
+  discount_amount?: number | null;
+  has_discount?: boolean;
   stock_quantity?: number | null;
   code?: string | null;
   edition?: number | null;
