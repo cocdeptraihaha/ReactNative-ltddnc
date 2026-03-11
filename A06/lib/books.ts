@@ -1,4 +1,4 @@
-import { apiFetch } from "./api";
+import { apiFetch, API_BASE } from "./api";
 
 export type Book = {
   id: number;
@@ -84,5 +84,65 @@ export async function getTopSellingBooks(limit = 10): Promise<Book[]> {
 export async function getTopDiscountedBooks(limit = 20): Promise<Book[]> {
   const path = `/books/top-discounted?limit=${limit}`;
   return apiFetch<Book[]>(path);
+}
+
+// ── Admin APIs ─────────────────────────────────────────
+
+export type CreateBookPayload = {
+  title: string;
+  author?: string | null;
+  code?: string | null;
+  edition?: number | null;
+  publication_date?: string | null;
+  selling_price?: number | null;
+  stock_quantity?: number | null;
+  book_detail?: {
+    description?: string | null;
+    pages?: number | null;
+    publisher?: string | null;
+    supplier?: string | null;
+    height?: number | null;
+    width?: number | null;
+    length?: number | null;
+    weight?: number | null;
+  } | null;
+};
+
+export type CreatedBook = Book & {
+  book_detail_id?: number | null;
+};
+
+export async function adminCreateBook(
+  token: string,
+  payload: CreateBookPayload,
+): Promise<CreatedBook> {
+  return apiFetch<CreatedBook>("/books/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    token,
+  });
+}
+
+export async function uploadBookImage(
+  token: string,
+  bookDetailId: number,
+  file: { uri: string; name: string; type: string },
+): Promise<{ image_url: string }> {
+  const form = new FormData();
+  if (typeof document === "undefined") {
+    form.append("file", { uri: file.uri, name: file.name, type: file.type } as any);
+  } else {
+    const resp = await fetch(file.uri);
+    const blob = await resp.blob();
+    form.append("file", blob, file.name);
+  }
+  const res = await fetch(`${API_BASE}/upload/book-detail/${bookDetailId}/image`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data as any)?.detail ?? "Upload failed");
+  return data as { image_url: string };
 }
 

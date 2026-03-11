@@ -27,6 +27,7 @@ export function BottomTabs() {
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.outlineVariant,
+          height: 60,
         },
         tabBarIcon: ({ color, size }) => {
           const iconName =

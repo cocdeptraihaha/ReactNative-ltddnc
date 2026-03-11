@@ -336,6 +336,13 @@ export function ProfileScreen() {
                 theme={theme}
               />
               <Divider />
+              <MenuItem
+                icon="book-plus-outline"
+                label="Thêm sách mới (Admin)"
+                onPress={() => navigation.navigate("AdminAddBook")}
+                theme={theme}
+              />
+              <Divider />
             </>
           )}
         </View>

@@ -11,6 +11,7 @@ import {
   OrderHistoryScreen,
   OrderDetailScreen,
   AdminOrderManageScreen,
+  AdminAddBookScreen,
 } from "../screens";
 import { BottomTabs } from "./BottomTabs";
 
@@ -32,6 +33,7 @@ export type RootStackParamList = {
   OrderHistory: undefined;
   OrderDetail: { orderId: number };
   AdminOrders: undefined;
+  AdminAddBook: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -54,6 +56,7 @@ export function RootStack() {
       <Stack.Screen name="OrderHistory" component={OrderHistoryScreen} />
       <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
       <Stack.Screen name="AdminOrders" component={AdminOrderManageScreen} />
+      <Stack.Screen name="AdminAddBook" component={AdminAddBookScreen} />
     </Stack.Navigator>
   );
 }

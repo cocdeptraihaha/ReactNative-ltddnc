@@ -24,7 +24,7 @@ export function CategorySlider(props: {
         horizontal
         data={data}
         keyExtractor={(item) => String(item.id ?? "all")}
-        showsHorizontalScrollIndicator={true}
+        showsHorizontalScrollIndicator={false}
         nestedScrollEnabled={true}
         contentContainerStyle={{
           paddingHorizontal: 16,
