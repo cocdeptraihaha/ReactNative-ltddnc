@@ -42,12 +42,14 @@ export async function getBooks(params: {
   page?: number;
   size?: number;
   q?: string;
+  categoryId?: number | null;
 }): Promise<Page<Book>> {
   const page = params.page ?? 1;
   const size = params.size ?? 10;
   const q = (params.q ?? "").trim().toLowerCase();
+  const categoryId = params.categoryId ?? null;
 
-  const cacheKey = `${page}:${size}:${q}`;
+  const cacheKey = `${page}:${size}:${q}:${categoryId ?? ""}`;
   const cached = booksCache.get(cacheKey);
   if (cached) return cached;
 
@@ -55,6 +57,7 @@ export async function getBooks(params: {
   if (page) search.set("page", String(page));
   if (size) search.set("size", String(size));
   if (q) search.set("q", q);
+  if (categoryId != null) search.set("category_id", String(categoryId));
 
   const query = search.toString();
   const path = `/books/${query ? `?${query}` : ""}`;

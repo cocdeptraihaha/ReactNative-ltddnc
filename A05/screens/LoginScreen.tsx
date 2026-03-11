@@ -33,9 +33,13 @@ export function LoginScreen() {
 
     try {
       await login(email.trim(), password);
-      navigation.replace("Home");
+      navigation.replace("Tabs");
     } catch (e) {
-      Alert.alert("Lỗi", e instanceof Error ? e.message : "Đăng nhập thất bại");
+      const msg = e instanceof Error ? e.message : "Đăng nhập thất bại";
+      Alert.alert(
+        "Đăng nhập thất bại",
+        `${msg}\n\nGợi ý:\n- Kiểm tra API_BASE (http://IP:8000)\n- Android cần bật cleartext HTTP\n- iOS có thể bị ATS chặn HTTP`,
+      );
     }
   };
 

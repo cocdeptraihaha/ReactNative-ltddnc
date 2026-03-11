@@ -1,5 +1,9 @@
-// export const API_BASE = "http://localhost:8000/api/v1";
+
 export const API_BASE = "https://kebook.apn.leapcell.app/api/v1";
+// IMPORTANT: must include scheme (http/https), otherwise fetch will fail.
+// export const API_BASE = "http://192.168.1.201:8000/api/v1";
+
+
 export type UploadAvatarResponse = {
   url: string;
   avatar_url: string;
@@ -24,8 +28,23 @@ export async function apiFetch<T>(
     (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE}${path}`, { ...init, headers });
-  const data = await res.json().catch(() => ({}));
+  const url = `${API_BASE}${path}`;
+  let res: Response;
+  try {
+    res = await fetch(url, { ...init, headers });
+  } catch (e) {
+    throw new Error(
+      `Network error. Cannot reach API.\nURL: ${url}\n${
+        e instanceof Error ? e.message : String(e)
+      }`,
+    );
+  }
+
+  const contentType = res.headers.get("content-type") ?? "";
+  const data =
+    contentType.includes("application/json")
+      ? await res.json().catch(() => ({}))
+      : await res.text().catch(() => "");
 
   if (res.status === 401 && token) {
     onUnauthorized?.();
@@ -33,10 +52,12 @@ export async function apiFetch<T>(
 
   if (!res.ok) {
     const detail =
-      typeof data.detail === "string"
-        ? data.detail
-        : JSON.stringify(data.detail || data);
-    throw new Error(detail);
+      typeof (data as any)?.detail === "string"
+        ? (data as any).detail
+        : typeof data === "string" && data
+          ? data
+          : JSON.stringify((data as any)?.detail || data);
+    throw new Error(`HTTP ${res.status} ${res.statusText}\n${detail}`);
   }
 
   return data as T;
@@ -48,7 +69,10 @@ export async function apiFormFetch<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const formBody = new URLSearchParams(body).toString();
-  const res = await fetch(`${API_BASE}${path}`, {
+  const url = `${API_BASE}${path}`;
+  let res: Response;
+  try {
+    res = await fetch(url, {
     ...options,
     method: "POST",
     headers: {
@@ -56,16 +80,29 @@ export async function apiFormFetch<T>(
       ...(options.headers as Record<string, string>),
     },
     body: formBody,
-  });
+    });
+  } catch (e) {
+    throw new Error(
+      `Network error. Cannot reach API.\nURL: ${url}\n${
+        e instanceof Error ? e.message : String(e)
+      }`,
+    );
+  }
 
-  const data = await res.json().catch(() => ({}));
+  const contentType = res.headers.get("content-type") ?? "";
+  const data =
+    contentType.includes("application/json")
+      ? await res.json().catch(() => ({}))
+      : await res.text().catch(() => "");
 
   if (!res.ok) {
     const detail =
-      typeof data.detail === "string"
-        ? data.detail
-        : JSON.stringify(data.detail || data);
-    throw new Error(detail);
+      typeof (data as any)?.detail === "string"
+        ? (data as any).detail
+        : typeof data === "string" && data
+          ? data
+          : JSON.stringify((data as any)?.detail || data);
+    throw new Error(`HTTP ${res.status} ${res.statusText}\n${detail}`);
   }
 
   return data as T;
@@ -99,13 +136,17 @@ export async function uploadAvatar(
     body: form,
   });
 
-  const data = (await res.json().catch(() => ({}))) as Partial<UploadAvatarResponse> & { detail?: unknown };
+  const data = (await res.json().catch(() => ({}))) as Partial<UploadAvatarResponse> & {
+    detail?: unknown;
+  };
   if (res.status === 401) {
     onUnauthorized?.();
   }
   if (!res.ok) {
     const detail =
-      typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail ?? data);
+      typeof data.detail === "string"
+        ? data.detail
+        : JSON.stringify(data.detail ?? data);
     throw new Error(detail);
   }
 

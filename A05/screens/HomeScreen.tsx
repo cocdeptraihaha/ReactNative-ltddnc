@@ -1,32 +1,31 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { ActivityIndicator, Surface, Text, useTheme } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootStack";
 import { useAuth } from "../context/AuthContext";
 import { HomeHeader } from "../components/HomeHeader";
 import { FormCard } from "../components/FormCard";
-import { AppTextInput } from "../components/AppTextInput";
 import { AppButton } from "../components/AppButton";
+import { CategorySlider } from "../components/CategorySlider";
 import { getBooks, type Book, type Page } from "../lib/books";
 import { getCategories, type Category } from "../lib/categories";
 import { formatDateVN } from "../utils/date";
-type HomeNav = NativeStackNavigationProp<RootStackParamList, "Home">;
+type HomeNav = any;
 
 export function HomeScreen() {
   const theme = useTheme();
   const navigation = useNavigation<HomeNav>();
   const { user, token, isReady, logout } = useAuth();
-  const [menuVisible, setMenuVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchDraft, setSearchDraft] = useState("");
   const [page, setPage] = useState(1);
   const [size] = useState(10);
   const [booksPage, setBooksPage] = useState<Page<Book> | null>(null);
   const [loadingBooks, setLoadingBooks] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const searchInputRef = useRef("");
   const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
 
   function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
     if (value === undefined || value === null || value === "") return null;
@@ -66,7 +65,12 @@ export function HomeScreen() {
       try {
         setLoadingBooks(true);
         setError(null);
-        const data = await getBooks({ page, size, q: searchQuery });
+        const data = await getBooks({
+          page,
+          size,
+          q: searchQuery,
+          categoryId: selectedCategoryId,
+        });
         setBooksPage(data);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load books");
@@ -74,7 +78,7 @@ export function HomeScreen() {
         setLoadingBooks(false);
       }
     })();
-  }, [page, size, searchQuery]);
+  }, [page, size, searchQuery, selectedCategoryId]);
 
   if (!isReady || !token) {
     return (
@@ -90,19 +94,13 @@ export function HomeScreen() {
   }
 
   const handleLogout = async () => {
-    setMenuVisible(false);
     await logout();
     navigation.replace("Welcome");
   };
 
-  const handleProfile = () => {
-    setMenuVisible(false);
-    navigation.navigate("Profile");
-  };
-
   const handleSearch = () => {
     setPage(1);
-    setSearchQuery(searchInputRef.current.trim());
+    setSearchQuery(searchDraft.trim());
   };
 
   const handlePrevPage = () => {
@@ -119,12 +117,9 @@ export function HomeScreen() {
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <HomeHeader
         title="KeBook – Books"
-        userDisplayName={user?.full_name ?? user?.email ?? undefined}
-        menuVisible={menuVisible}
-        onMenuDismiss={() => setMenuVisible(false)}
-        onMenuOpen={() => setMenuVisible(true)}
-        onProfile={handleProfile}
-        onLogout={handleLogout}
+        searchValue={searchDraft}
+        onSearchValueChange={setSearchDraft}
+        onSearchSubmit={handleSearch}
       />
 
       <ScrollView
@@ -148,48 +143,15 @@ export function HomeScreen() {
             <InfoRow label="Welcome" value={user?.full_name ?? user?.email ?? null} />
 
             {categories.length > 0 && (
-              <View style={{ marginBottom: 8 }}>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ paddingVertical: 4 }}
-                >
-                  {categories.map((cat) => (
-                    <View
-                      key={cat.id}
-                      style={{
-                        marginRight: 8,
-                        paddingHorizontal: 12,
-                        paddingVertical: 6,
-                        borderRadius: 999,
-                        borderWidth: 1,
-                        borderColor: theme.colors.outline,
-                        backgroundColor: theme.colors.surface,
-                      }}
-                    >
-                      <Text
-                        variant="bodySmall"
-                        style={{ color: theme.colors.onSurfaceVariant }}
-                      >
-                        {cat.name}
-                      </Text>
-                    </View>
-                  ))}
-                </ScrollView>
-              </View>
+              <CategorySlider
+                categories={categories}
+                selectedCategoryId={selectedCategoryId}
+                onSelectCategoryId={(id) => {
+                  setPage(1);
+                  setSelectedCategoryId(id);
+                }}
+              />
             )}
-
-            <AppTextInput
-              label="Search by title or author"
-              defaultValue=""
-              onChangeText={(text) => {
-                searchInputRef.current = text;
-              }}
-              onSubmitEditing={handleSearch}
-              editable={!loadingBooks}
-              mb={8}
-              returnKeyType="search"
-            />
 
             {loadingBooks && (
               <View style={{ marginVertical: 8, alignItems: "center" }}>

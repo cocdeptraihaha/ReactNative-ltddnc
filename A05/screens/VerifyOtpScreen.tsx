@@ -36,7 +36,7 @@ export function VerifyOtpScreen() {
     try {
       const res = await authApi.verifyOtp(email, otp.trim());
       await setAuth(res.access_token, res.user);
-      navigation.replace("Home");
+      navigation.replace("Tabs");
     } catch (e) {
       Alert.alert(
         "Lỗi",

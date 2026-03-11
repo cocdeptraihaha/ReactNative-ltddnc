@@ -4,7 +4,6 @@ import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { ActivityIndicator, Surface, Text, useTheme } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootStack";
 import { useAuth } from "../context/AuthContext";
 import { AppButton } from "../components/AppButton";
@@ -19,7 +18,7 @@ import { getProvinces, getWards, type ProvinceItem, type WardItem } from "../lib
 import { resizeToSquare500 } from "../utils/image";
 import { md5OfLocalFile, md5OfRemoteFile } from "../utils/hash";
 import { parseYmdToDate, toYmd } from "../utils/date";
-type ProfileNav = NativeStackNavigationProp<RootStackParamList, "Profile">;
+type ProfileNav = any;
 
 export function ProfileScreen() {
   const theme = useTheme();
@@ -394,10 +393,17 @@ export function ProfileScreen() {
               />
             </View>
 
-            <AppButton mode="outlined" onPress={onLogout} mt={8}>
-              Logout
-            </AppButton>
+            
           </FormCard>
+          <AppButton
+            mode="contained"
+            onPress={onLogout}
+            mt={8}
+            buttonColor={theme.colors.error}
+            textColor={theme.colors.onError}
+          >
+            Logout
+          </AppButton>
         </View>
       </ScrollView>
     </Surface>

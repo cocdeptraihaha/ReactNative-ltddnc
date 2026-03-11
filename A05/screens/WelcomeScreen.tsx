@@ -16,7 +16,7 @@ export function WelcomeScreen() {
 
   useEffect(() => {
     if (isReady && token) {
-      navigation.replace("Home");
+      navigation.replace("Tabs");
     }
   }, [isReady, token, navigation]);
 

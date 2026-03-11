@@ -1,24 +1,18 @@
 import { View } from "react-native";
-import { Appbar, Divider, Menu, Text, useTheme } from "react-native-paper";
+import { Appbar, Searchbar, useTheme } from "react-native-paper";
 
 export type HomeHeaderProps = {
   title?: string;
-  userDisplayName?: string | null;
-  menuVisible: boolean;
-  onMenuDismiss: () => void;
-  onMenuOpen: () => void;
-  onProfile?: () => void;
-  onLogout: () => void;
+  searchValue?: string;
+  onSearchValueChange?: (text: string) => void;
+  onSearchSubmit?: () => void;
 };
 
 export function HomeHeader({
   title = "KeBook",
-  userDisplayName,
-  menuVisible,
-  onMenuDismiss,
-  onMenuOpen,
-  onProfile,
-  onLogout,
+  searchValue,
+  onSearchValueChange,
+  onSearchSubmit,
 }: HomeHeaderProps) {
   const theme = useTheme();
 
@@ -26,24 +20,33 @@ export function HomeHeader({
     <Appbar.Header
       elevated
       theme={{ colors: { primaryContainer: theme.colors.primaryContainer } }}
+      style={{
+        borderBottomWidth: 1,
+        borderBottomColor: theme.colors.outlineVariant,
+      }}
     >
       <Appbar.Content title={title} titleStyle={titleStyle} />
 
-      <Menu
-        visible={menuVisible}
-        onDismiss={onMenuDismiss}
-        anchor={<Appbar.Action icon="account-circle" onPress={onMenuOpen} />}
-        anchorPosition="top"
-      >
-        <View style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
-          <Text variant="labelLarge">{userDisplayName ?? "Account"}</Text>
+      {onSearchValueChange && (
+        <View style={{ flex: 1, maxWidth: 520, marginRight: 12 }}>
+          <Searchbar
+            value={searchValue ?? ""}
+            onChangeText={onSearchValueChange}
+            placeholder="Search…"
+            onSubmitEditing={onSearchSubmit}
+            icon="magnify"
+            clearIcon="close"
+            style={{
+              borderRadius: 14,
+              backgroundColor: theme.colors.surface,
+              height: 40,
+            }}
+            inputStyle={{ minHeight: 0 }}
+            elevation={0}
+            mode="bar"
+          />
         </View>
-        <Divider />
-        {onProfile && (
-          <Menu.Item onPress={onProfile} title="Profile" leadingIcon="account" />
-        )}
-        <Menu.Item onPress={onLogout} title="Logout" leadingIcon="logout" />
-      </Menu>
+      )}
     </Appbar.Header>
   );
 }
