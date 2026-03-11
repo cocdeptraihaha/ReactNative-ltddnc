@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FlatList, Pressable, ScrollView, View } from "react-native";
+import { FlatList, Pressable, View } from "react-native";
 import { ActivityIndicator, Surface, Text, useTheme } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
@@ -27,6 +27,7 @@ export function HomeScreen() {
   const [page, setPage] = useState(1);
   const [size] = useState(10);
   const [booksPage, setBooksPage] = useState<Page<Book> | null>(null);
+  const [books, setBooks] = useState<Book[]>([]);
   const [loadingBooks, setLoadingBooks] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -83,6 +84,11 @@ export function HomeScreen() {
           categoryId: selectedCategoryId,
         });
         setBooksPage(data);
+        if (page === 1) {
+          setBooks(data.items);
+        } else {
+          setBooks((prev) => [...prev, ...data.items]);
+        }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load books");
       } finally {
@@ -90,8 +96,6 @@ export function HomeScreen() {
       }
     })();
   }, [page, size, searchQuery, selectedCategoryId]);
-
-  const books = booksPage?.items ?? [];
 
   useEffect(() => {
     (async () => {
@@ -153,23 +157,16 @@ export function HomeScreen() {
   };
 
   const handleNextPage = () => {
-    if (booksPage && page < booksPage.pages) {
+    if (!booksPage || loadingBooks) return;
+    if (page < booksPage.pages) {
       setPage((p) => p + 1);
     }
   };
 
-  return (
-    <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <HomeHeader
-        title="KeBook – Books"
-        searchValue={searchDraft}
-        onSearchValueChange={setSearchDraft}
-        onSearchSubmit={handleSearch}
-      />
-
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{
+  const renderHeader = () => {
+    return (
+      <View
+        style={{
           paddingHorizontal: 16,
           paddingVertical: 16,
           alignItems: "center",
@@ -343,59 +340,50 @@ export function HomeScreen() {
                   Tất cả sách
                 </Text>
               </View>
-
-              <FlatList
-                data={books}
-                keyExtractor={(item) => String(item.id)}
-                numColumns={2}
-                scrollEnabled={false}
-                contentContainerStyle={{ paddingTop: 6 }}
-                renderItem={({ item }) => (
-                  <ProductCard
-                    book={item}
-                    onPress={() => navigation.navigate("BookDetail", { bookId: item.id })}
-                  />
-                )}
-              />
             </View>
-
-            {booksPage && (
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginTop: 12,
-                }}
-              >
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  Page {booksPage.page} / {booksPage.pages} • {booksPage.total} books
-                </Text>
-                <View style={{ flexDirection: "row", gap: 8 }}>
-                  <AppButton
-                    mode="outlined"
-                    onPress={handlePrevPage}
-                    disabled={booksPage.page <= 1 || loadingBooks}
-                    style={{ marginRight: 4 }}
-                  >
-                    Prev
-                  </AppButton>
-                  <AppButton
-                    mode="outlined"
-                    onPress={handleNextPage}
-                    disabled={
-                      loadingBooks || booksPage.page >= booksPage.pages
-                    }
-                  >
-                    Next
-                  </AppButton>
-                </View>
-              </View>
-            )}
-
           </FormCard>
         </View>
-      </ScrollView>
+      </View>
+    );
+  };
+
+  return (
+    <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <HomeHeader
+        title="KeBook – Books"
+        searchValue={searchDraft}
+        onSearchValueChange={setSearchDraft}
+        onSearchSubmit={handleSearch}
+      />
+
+      <FlatList
+        data={books}
+        keyExtractor={(item) => String(item.id)}
+        numColumns={2}
+        ListHeaderComponent={renderHeader}
+        contentContainerStyle={{
+          paddingBottom: 16,
+        }}
+        onEndReached={handleNextPage}
+        onEndReachedThreshold={0.5}
+        renderItem={({ item }) => (
+          <View style={{ paddingHorizontal: 16, marginTop: 6 }}>
+            <View style={{ width: "100%", maxWidth: 720, alignSelf: "center" }}>
+              <ProductCard
+                book={item}
+                onPress={() => navigation.navigate("BookDetail", { bookId: item.id })}
+              />
+            </View>
+          </View>
+        )}
+        ListFooterComponent={
+          loadingBooks && books.length > 0 ? (
+            <View style={{ paddingVertical: 12, alignItems: "center" }}>
+              <ActivityIndicator />
+            </View>
+          ) : null
+        }
+      />
     </Surface>
   );
 }
