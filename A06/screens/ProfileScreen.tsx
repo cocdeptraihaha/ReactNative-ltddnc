@@ -395,6 +395,27 @@ export function ProfileScreen() {
 
             
           </FormCard>
+
+          <AppButton
+            mode="outlined"
+            onPress={() => navigation.navigate("OrderHistory" as any)}
+            mt={8}
+            icon="receipt"
+          >
+            Lịch sử đơn hàng
+          </AppButton>
+
+          {user.is_superuser && (
+            <AppButton
+              mode="outlined"
+              onPress={() => navigation.navigate("AdminOrders" as any)}
+              mt={8}
+              icon="clipboard-list-outline"
+            >
+              Quản lý đơn hàng (Admin)
+            </AppButton>
+          )}
+
           <AppButton
             mode="contained"
             onPress={onLogout}

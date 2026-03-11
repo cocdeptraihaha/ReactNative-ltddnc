@@ -8,6 +8,9 @@ import {
   ResetPasswordScreen,
   BookDetailScreen,
   CheckoutScreen,
+  OrderHistoryScreen,
+  OrderDetailScreen,
+  AdminOrderManageScreen,
 } from "../screens";
 import { BottomTabs } from "./BottomTabs";
 
@@ -26,6 +29,9 @@ export type RootStackParamList = {
         items?: { bookId: number; quantity: number }[];
       }
     | undefined;
+  OrderHistory: undefined;
+  OrderDetail: { orderId: number };
+  AdminOrders: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -45,7 +51,9 @@ export function RootStack() {
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="BookDetail" component={BookDetailScreen} />
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
+      <Stack.Screen name="OrderHistory" component={OrderHistoryScreen} />
+      <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
+      <Stack.Screen name="AdminOrders" component={AdminOrderManageScreen} />
     </Stack.Navigator>
   );
 }
-

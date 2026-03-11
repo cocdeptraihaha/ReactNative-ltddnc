@@ -7,6 +7,13 @@ export type OrderItem = {
   price: number;
 };
 
+export type OrderStatusHistory = {
+  id: number;
+  status: string | null;
+  status_change_date: string | null;
+  description: string | null;
+};
+
 export type Order = {
   id: number;
   order_date?: string | null;
@@ -15,6 +22,7 @@ export type Order = {
   phone_number?: string | null;
   shipping_address?: string | null;
   order_items?: OrderItem[];
+  status_history?: OrderStatusHistory[];
 };
 
 export type OrderCheckoutSummary = {
@@ -40,6 +48,32 @@ export type CheckoutPayload = {
   items?: CheckoutItemPayload[] | null;
 };
 
+export const STATUS_LABELS: Record<string, string> = {
+  PENDING: "Đơn mới",
+  CONFIRMED: "Đã xác nhận",
+  INPROGRESS: "Đang chuẩn bị",
+  SHIPPED: "Đang giao",
+  DELIVERED: "Đã giao",
+  COMPLETED: "Hoàn thành",
+  CANCELLED: "Đã hủy",
+  CANCEL_REQUESTED: "Yêu cầu hủy",
+  RETURNED: "Trả hàng",
+};
+
+export const STATUS_COLORS: Record<string, string> = {
+  PENDING: "#FB8C00",
+  CONFIRMED: "#1E88E5",
+  INPROGRESS: "#8E24AA",
+  SHIPPED: "#00ACC1",
+  DELIVERED: "#43A047",
+  COMPLETED: "#2E7D32",
+  CANCELLED: "#E53935",
+  CANCEL_REQUESTED: "#F4511E",
+  RETURNED: "#757575",
+};
+
+// ── User APIs ──────────────────────────────────────────
+
 export async function checkoutFromCart(
   token: string,
   payload: CheckoutPayload,
@@ -51,3 +85,59 @@ export async function checkoutFromCart(
   });
 }
 
+export async function getMyOrders(
+  token: string,
+  status?: string | null,
+): Promise<Order[]> {
+  const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+  return apiFetch<Order[]>(`/orders/${qs}`, { token });
+}
+
+export async function getOrderDetail(
+  token: string,
+  orderId: number,
+): Promise<Order> {
+  return apiFetch<Order>(`/orders/${orderId}`, { token });
+}
+
+export async function cancelOrder(
+  token: string,
+  orderId: number,
+  reason?: string,
+): Promise<Order> {
+  return apiFetch<Order>(`/orders/${orderId}/cancel`, {
+    method: "POST",
+    body: JSON.stringify({ reason: reason || null }),
+    token,
+  });
+}
+
+// ── Admin APIs ─────────────────────────────────────────
+
+export async function adminListOrders(
+  token: string,
+  status?: string | null,
+): Promise<Order[]> {
+  const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+  return apiFetch<Order[]>(`/orders/admin/all${qs}`, { token });
+}
+
+export async function adminGetOrder(
+  token: string,
+  orderId: number,
+): Promise<Order> {
+  return apiFetch<Order>(`/orders/admin/${orderId}`, { token });
+}
+
+export async function adminUpdateOrderStatus(
+  token: string,
+  orderId: number,
+  status: string,
+  description?: string,
+): Promise<Order> {
+  return apiFetch<Order>(`/orders/admin/${orderId}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status, description: description || null }),
+    token,
+  });
+}
