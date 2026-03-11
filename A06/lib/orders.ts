@@ -3,6 +3,7 @@ import { apiFetch } from "./api";
 export type OrderItem = {
   id: number;
   book_id: number | null;
+  book_title?: string | null;
   quantity: number;
   price: number;
 };
@@ -16,9 +17,11 @@ export type OrderStatusHistory = {
 
 export type Order = {
   id: number;
+  full_name?: string | null;
   order_date?: string | null;
   status?: string | null;
   total_price?: number | null;
+  user_id?: number | null;
   phone_number?: string | null;
   shipping_address?: string | null;
   order_items?: OrderItem[];
@@ -39,6 +42,7 @@ export type CheckoutItemPayload = {
 };
 
 export type CheckoutPayload = {
+  full_name?: string | null;
   note?: string | null;
   phone_number: string;
   shipping_address: string;
@@ -50,12 +54,12 @@ export type CheckoutPayload = {
 
 export const STATUS_LABELS: Record<string, string> = {
   PENDING: "Đơn mới",
-  CONFIRMED: "Đã xác nhận",
-  INPROGRESS: "Đang chuẩn bị",
-  SHIPPED: "Đang giao",
+  CONFIRMED: "Xác nhận đơn",
+  INPROGRESS: "Đã chuẩn bị hàng",
+  SHIPPED: "Giao hàng",
   DELIVERED: "Đã giao",
   COMPLETED: "Hoàn thành",
-  CANCELLED: "Đã hủy",
+  CANCELLED: "Hủy đơn",
   CANCEL_REQUESTED: "Yêu cầu hủy",
   RETURNED: "Trả hàng",
 };

@@ -191,7 +191,7 @@ export function AdminOrderManageScreen() {
                   </Text>
                 </View>
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  User #{item.user_id ?? "?"} · {fmtDate(item.order_date)}
+                  {item.full_name || `User #${item.user_id ?? "?"}`} · {fmtDate(item.order_date)}
                 </Text>
                 <Text
                   variant="titleSmall"
@@ -236,6 +236,9 @@ export function AdminOrderManageScreen() {
                 Đơn #{selectedOrder.id}
               </Text>
               <Text variant="bodySmall" style={{ marginBottom: 4 }}>
+                Khách hàng: {selectedOrder.full_name || `User #${selectedOrder.user_id ?? "?"}`}
+              </Text>
+              <Text variant="bodySmall" style={{ marginBottom: 4 }}>
                 Ngày: {fmtDate(selectedOrder.order_date)}
               </Text>
               <Text variant="bodySmall" style={{ marginBottom: 4 }}>
@@ -267,7 +270,7 @@ export function AdminOrderManageScreen() {
                     paddingVertical: 2,
                   }}
                 >
-                  <Text variant="bodySmall">Book #{oi.book_id} x{oi.quantity}</Text>
+                  <Text variant="bodySmall">{oi.book_title || `#${oi.book_id}`} x{oi.quantity}</Text>
                   <Text variant="bodySmall">{fmtPrice(oi.price * oi.quantity)}</Text>
                 </View>
               ))}

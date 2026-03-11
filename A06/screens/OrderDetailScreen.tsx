@@ -174,7 +174,7 @@ export function OrderDetailScreen() {
               }}
             >
               <Text variant="bodyMedium">
-                Book #{oi.book_id} x{oi.quantity}
+                {oi.book_title || `#${oi.book_id}`} x{oi.quantity}
               </Text>
               <Text variant="bodyMedium" style={{ fontWeight: "600" }}>
                 {fmtPrice(oi.price * oi.quantity)}
