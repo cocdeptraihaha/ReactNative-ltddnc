@@ -9,7 +9,13 @@ import { FormCard } from "../components/FormCard";
 import { AppButton } from "../components/AppButton";
 import { CategorySlider } from "../components/CategorySlider";
 import { ProductCard } from "../components/ProductCard";
-import { getBooks, type Book, type Page } from "../lib/books";
+import {
+  getBooks,
+  getTopDiscountedBooks,
+  getTopSellingBooks,
+  type Book,
+  type Page,
+} from "../lib/books";
 import { getCategories, type Category } from "../lib/categories";
 import { formatDateVN } from "../utils/date";
 type HomeNav = any;
@@ -27,6 +33,12 @@ export function HomeScreen() {
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [topSelling, setTopSelling] = useState<Book[]>([]);
+  const [loadingTopSelling, setLoadingTopSelling] = useState(false);
+  const [topSellingError, setTopSellingError] = useState<string | null>(null);
+  const [topDiscounted, setTopDiscounted] = useState<Book[]>([]);
+  const [loadingTopDiscounted, setLoadingTopDiscounted] = useState(false);
+  const [topDiscountedError, setTopDiscountedError] = useState<string | null>(null);
 
   function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
     if (value === undefined || value === null || value === "") return null;
@@ -82,6 +94,38 @@ export function HomeScreen() {
   }, [page, size, searchQuery, selectedCategoryId]);
 
   const books = booksPage?.items ?? [];
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoadingTopSelling(true);
+        setTopSellingError(null);
+        const data = await getTopSellingBooks(10);
+        setTopSelling(data);
+      } catch (e) {
+        setTopSellingError(e instanceof Error ? e.message : "Failed to load top-selling books");
+      } finally {
+        setLoadingTopSelling(false);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoadingTopDiscounted(true);
+        setTopDiscountedError(null);
+        const data = await getTopDiscountedBooks(20);
+        setTopDiscounted(data);
+      } catch (e) {
+        setTopDiscountedError(
+          e instanceof Error ? e.message : "Failed to load top discounted books",
+        );
+      } finally {
+        setLoadingTopDiscounted(false);
+      }
+    })();
+  }, []);
 
   if (!isReady || !token) {
     return (
@@ -192,21 +236,86 @@ export function HomeScreen() {
               </Text>
             )}
 
-            <View style={{ marginTop: 10 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                <Text variant="titleMedium" style={{ fontWeight: "800", color: theme.colors.onSurface }}>
-                  Popular
+            <View style={{ marginTop: 16 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text
+                  variant="titleMedium"
+                  style={{ fontWeight: "800", color: theme.colors.onSurface }}
+                >
+                  Top 10 bán chạy
                 </Text>
-                <Pressable onPress={() => {}}>
-                  <Text variant="labelLarge" style={{ color: theme.colors.primary, fontWeight: "700" }}>
-                    See All
-                  </Text>
-                </Pressable>
               </View>
 
+              {loadingTopSelling && (
+                <View style={{ marginVertical: 8, alignItems: "center" }}>
+                  <ActivityIndicator />
+                </View>
+              )}
+
+              {topSellingError && (
+                <Text
+                  variant="bodySmall"
+                  style={{ color: theme.colors.error, marginTop: 4 }}
+                >
+                  {topSellingError}
+                </Text>
+              )}
+
               <FlatList
-                data={books}
-                keyExtractor={(item) => String(item.id)}
+                data={topSelling}
+                keyExtractor={(item) => `top-${item.id}`}
+                numColumns={2}
+                scrollEnabled={false}
+                contentContainerStyle={{ paddingTop: 6 }}
+                renderItem={({ item }) => (
+                  <ProductCard
+                    book={item}
+                    onPress={() => navigation.navigate("BookDetail", { bookId: item.id })}
+                  />
+                )}
+              />
+            </View>
+
+            <View style={{ marginTop: 24 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text
+                  variant="titleMedium"
+                  style={{ fontWeight: "800", color: theme.colors.onSurface }}
+                >
+                  Giảm giá nhiều nhất
+                </Text>
+              </View>
+
+              {loadingTopDiscounted && (
+                <View style={{ marginVertical: 8, alignItems: "center" }}>
+                  <ActivityIndicator />
+                </View>
+              )}
+
+              {topDiscountedError && (
+                <Text
+                  variant="bodySmall"
+                  style={{ color: theme.colors.error, marginTop: 4 }}
+                >
+                  {topDiscountedError}
+                </Text>
+              )}
+
+              <FlatList
+                data={topDiscounted}
+                keyExtractor={(item) => `disc-${item.id}`}
                 numColumns={2}
                 scrollEnabled={false}
                 contentContainerStyle={{ paddingTop: 6 }}

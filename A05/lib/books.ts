@@ -76,3 +76,13 @@ export async function getBook(id: number): Promise<BookWithDetail> {
   return apiFetch<BookWithDetail>(`/books/${id}`);
 }
 
+export async function getTopSellingBooks(limit = 10): Promise<Book[]> {
+  const path = `/books/top-selling?limit=${limit}`;
+  return apiFetch<Book[]>(path);
+}
+
+export async function getTopDiscountedBooks(limit = 20): Promise<Book[]> {
+  const path = `/books/top-discounted?limit=${limit}`;
+  return apiFetch<Book[]>(path);
+}
+
