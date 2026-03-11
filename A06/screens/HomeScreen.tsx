@@ -298,12 +298,15 @@ export function HomeScreen() {
             keyExtractor={(item) => `disc-${item.id}`}
             numColumns={2}
             scrollEnabled={false}
+            columnWrapperStyle={{ justifyContent: "space-between" }}
             contentContainerStyle={{ paddingTop: 6 }}
             renderItem={({ item }) => (
-              <ProductCard
-                book={item}
-                onPress={() => navigation.navigate("BookDetail", { bookId: item.id })}
-              />
+              <View style={{ width: "48%", marginTop: 6 }}>
+                <ProductCard
+                  book={item}
+                  onPress={() => navigation.navigate("BookDetail", { bookId: item.id })}
+                />
+              </View>
             )}
           />
         </View>
@@ -331,7 +334,7 @@ export function HomeScreen() {
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <HomeHeader
-        title="KeBook – Books"
+        title="KeBook – Trang chủ"
         searchValue={searchDraft}
         onSearchValueChange={setSearchDraft}
         onSearchSubmit={handleSearch}
@@ -351,6 +354,7 @@ export function HomeScreen() {
               data={books}
               keyExtractor={(item) => String(item.id)}
               numColumns={2}
+              columnWrapperStyle={{ justifyContent: "space-between" }}
               ListHeaderComponent={renderHeader}
               contentContainerStyle={{
                 paddingBottom: 16,
@@ -358,7 +362,7 @@ export function HomeScreen() {
               onEndReached={handleNextPage}
               onEndReachedThreshold={0.5}
               renderItem={({ item }) => (
-                <View style={{ marginTop: 6 }}>
+                <View style={{ width: "48%", marginTop: 6 }}>
                   <ProductCard
                     book={item}
                     onPress={() => navigation.navigate("BookDetail", { bookId: item.id })}

@@ -4,6 +4,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  View,
 } from "react-native";
 import { Text, Surface, useTheme } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";

@@ -1,6 +1,8 @@
 import { useEffect } from "react";
+import "react-native-gesture-handler";
 import { NavigationContainer, useNavigationContainerRef } from "@react-navigation/native";
 import { PaperProvider } from "react-native-paper";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { RootStack } from "./navigation/RootStack";
 import { theme } from "./theme";
@@ -30,11 +32,13 @@ function AppContent() {
 
 export default function App() {
   return (
-    <PaperProvider theme={theme}>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </PaperProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <PaperProvider theme={theme}>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </PaperProvider>
+    </GestureHandlerRootView>
   );
 }
 

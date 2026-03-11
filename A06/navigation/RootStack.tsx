@@ -6,6 +6,7 @@ import { VerifyOtpScreen } from "../screens/VerifyOtpScreen";
 import { ForgotPasswordScreen } from "../screens/ForgotPasswordScreen";
 import { ResetPasswordScreen } from "../screens/ResetPasswordScreen";
 import { BookDetailScreen } from "../screens/BookDetailScreen";
+import { CheckoutScreen } from "../screens/CheckoutScreen";
 import { BottomTabs } from "./BottomTabs";
 
 export type RootStackParamList = {
@@ -17,6 +18,7 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   ResetPassword: { email: string };
   BookDetail: { bookId: number };
+  Checkout: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -35,6 +37,7 @@ export function RootStack() {
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="BookDetail" component={BookDetailScreen} />
+      <Stack.Screen name="Checkout" component={CheckoutScreen} />
     </Stack.Navigator>
   );
 }

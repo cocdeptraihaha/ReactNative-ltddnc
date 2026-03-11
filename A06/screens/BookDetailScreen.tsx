@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { Image } from "expo-image";
-import { ActivityIndicator, Appbar, Surface, Text, useTheme } from "react-native-paper";
+import { ActivityIndicator, Appbar, Button, Snackbar, Surface, Text, useTheme } from "react-native-paper";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RouteProp } from "@react-navigation/native";
@@ -9,6 +9,8 @@ import type { RootStackParamList } from "../navigation/RootStack";
 import { getBook, type BookWithDetail } from "../lib/books";
 import { formatDateVN } from "../utils/date";
 import { FormCard } from "../components/FormCard";
+import { useAuth } from "../context/AuthContext";
+import { addToCart } from "../lib/cart";
 
 type BookDetailNav = NativeStackNavigationProp<RootStackParamList, "BookDetail">;
 type BookDetailRoute = RouteProp<RootStackParamList, "BookDetail">;
@@ -18,10 +20,12 @@ export function BookDetailScreen() {
   const navigation = useNavigation<BookDetailNav>();
   const route = useRoute<BookDetailRoute>();
   const { bookId } = route.params;
+  const { token } = useAuth();
 
   const [book, setBook] = useState<BookWithDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [snackbar, setSnackbar] = useState<{ visible: boolean; message: string }>({ visible: false, message: "" });
 
   function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
     if (value === undefined || value === null || value === "") return null;
@@ -85,6 +89,22 @@ export function BookDetailScreen() {
 
   const d = book.book_detail;
 
+  const handleAddToCart = async () => {
+    if (!token) {
+      setSnackbar({ visible: true, message: "Vui lòng đăng nhập để thêm vào giỏ." });
+      return;
+    }
+    try {
+      await addToCart(token, { book_id: book.id, quantity: 1 });
+      setSnackbar({ visible: true, message: "Đã thêm vào giỏ hàng." });
+    } catch (e) {
+      setSnackbar({
+        visible: true,
+        message: "Thêm vào giỏ thất bại. Vui lòng thử lại.",
+      });
+    }
+  };
+
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header
@@ -105,6 +125,7 @@ export function BookDetailScreen() {
           paddingHorizontal: 16,
           paddingVertical: 16,
           alignItems: "center",
+          paddingBottom: 80,
         }}
       >
         <View style={{ width: "100%", maxWidth: 720 }}>
@@ -214,6 +235,44 @@ export function BookDetailScreen() {
           </FormCard>
         </View>
       </ScrollView>
+
+      <View
+        style={{
+          paddingHorizontal: 16,
+          paddingVertical: 10,
+          borderTopWidth: 1,
+          borderTopColor: theme.colors.outlineVariant,
+          backgroundColor: theme.colors.surface,
+        }}
+      >
+        <View style={{ width: "100%", maxWidth: 720, alignSelf: "center", flexDirection: "row", gap: 12 }}>
+          <Button
+            mode="outlined"
+            onPress={handleAddToCart}
+            style={{ flex: 1, borderRadius: 999 }}
+            contentStyle={{ paddingVertical: 6 }}
+          >
+            Thêm vào giỏ
+          </Button>
+          <Button
+            mode="contained"
+            onPress={handleAddToCart}
+            style={{ flex: 1, borderRadius: 999 }}
+            contentStyle={{ paddingVertical: 6 }}
+          >
+            Mua ngay
+          </Button>
+        </View>
+      </View>
+
+      <Snackbar
+        visible={snackbar.visible}
+        onDismiss={() => setSnackbar((s) => ({ ...s, visible: false }))}
+        duration={2000}
+        style={{ marginBottom: 80 }}
+      >
+        {snackbar.message}
+      </Snackbar>
     </Surface>
   );
 }
