@@ -5,7 +5,6 @@ import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { HomeHeader } from "../components/HomeHeader";
 import { FormCard } from "../components/FormCard";
-import { AppButton } from "../components/AppButton";
 import { CategorySlider } from "../components/CategorySlider";
 import { ProductCard } from "../components/ProductCard";
 import {
@@ -142,19 +141,11 @@ export function HomeScreen() {
     );
   }
 
-  const handleLogout = async () => {
-    await logout();
-    navigation.replace("Welcome");
-  };
-
   const handleSearch = () => {
     setPage(1);
     setSearchQuery(searchDraft.trim());
   };
 
-  const handlePrevPage = () => {
-    setPage((p) => Math.max(1, p - 1));
-  };
 
   const handleNextPage = () => {
     if (!booksPage || loadingBooks) return;
@@ -165,183 +156,173 @@ export function HomeScreen() {
 
   const renderHeader = () => {
     return (
-      <View
-        style={{
-          paddingHorizontal: 16,
-          paddingVertical: 16,
-          alignItems: "center",
-        }}
-      >
-        <View style={{ width: "100%", maxWidth: 720 }}>
-          <FormCard>
-            <View style={{ marginBottom: 16 }}>
-              <Text
-                variant="titleMedium"
-                style={{ fontWeight: "700", color: theme.colors.onSurface }}
-              >
-                Books
-              </Text>
-            </View>
-            <InfoRow label="Welcome" value={user?.full_name ?? user?.email ?? null} />
+      <View>
+        <View style={{ marginBottom: 16 }}>
+          <Text
+            variant="titleMedium"
+            style={{ fontWeight: "700", color: theme.colors.onSurface }}
+          >
+            Books
+          </Text>
+        </View>
+        <InfoRow label="Welcome" value={user?.full_name ?? user?.email ?? null} />
 
-            {categories.length > 0 && (
-              <CategorySlider
-                categories={categories}
-                selectedCategoryId={selectedCategoryId}
-                onSelectCategoryId={(id) => {
-                  setPage(1);
-                  setSelectedCategoryId(id);
-                }}
-              />
-            )}
+        {categories.length > 0 && (
+          <CategorySlider
+            categories={categories}
+            selectedCategoryId={selectedCategoryId}
+            onSelectCategoryId={(id) => {
+              setPage(1);
+              setSelectedCategoryId(id);
+            }}
+          />
+        )}
 
-            <View
-              style={{
-                marginTop: 14,
-                padding: 14,
-                borderRadius: 18,
-                backgroundColor: theme.colors.primaryContainer,
-                borderWidth: 1,
-                borderColor: theme.colors.primary,
-              }}
+        <View
+          style={{
+            marginTop: 14,
+            padding: 14,
+            borderRadius: 18,
+            backgroundColor: theme.colors.primaryContainer,
+            borderWidth: 1,
+            borderColor: theme.colors.primary,
+          }}
+        >
+          <Text variant="titleMedium" style={{ color: theme.colors.onPrimaryContainer, fontWeight: "800" }}>
+            Discover your next favorite book
+          </Text>
+          <Text
+            variant="bodySmall"
+            style={{ color: theme.colors.onPrimaryContainer, marginTop: 6, opacity: 0.9 }}
+          >
+            Search, pick a category, then explore popular picks.
+          </Text>
+        </View>
+
+        {loadingBooks && (
+          <View style={{ marginVertical: 8, alignItems: "center" }}>
+            <ActivityIndicator />
+          </View>
+        )}
+
+        {error && (
+          <Text
+            variant="bodySmall"
+            style={{ color: theme.colors.error, marginBottom: 8 }}
+          >
+            {error}
+          </Text>
+        )}
+
+        <View style={{ marginTop: 16 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Text
+              variant="titleMedium"
+              style={{ fontWeight: "800", color: theme.colors.onSurface }}
             >
-              <Text variant="titleMedium" style={{ color: theme.colors.onPrimaryContainer, fontWeight: "800" }}>
-                Discover your next favorite book
-              </Text>
-              <Text
-                variant="bodySmall"
-                style={{ color: theme.colors.onPrimaryContainer, marginTop: 6, opacity: 0.9 }}
-              >
-                Search, pick a category, then explore popular picks.
-              </Text>
-            </View>
+              Top 10 bán chạy
+            </Text>
+          </View>
 
-            {loadingBooks && (
-              <View style={{ marginVertical: 8, alignItems: "center" }}>
-                <ActivityIndicator />
+          {loadingTopSelling && (
+            <View style={{ marginVertical: 8, alignItems: "center" }}>
+              <ActivityIndicator />
+            </View>
+          )}
+
+          {topSellingError && (
+            <Text
+              variant="bodySmall"
+              style={{ color: theme.colors.error, marginTop: 4 }}
+            >
+              {topSellingError}
+            </Text>
+          )}
+
+          <FlatList
+            data={topSelling}
+            keyExtractor={(item) => `top-${item.id}`}
+            horizontal
+            showsHorizontalScrollIndicator={true}
+            contentContainerStyle={{ paddingTop: 6, paddingRight: 4 }}
+            renderItem={({ item }) => (
+              <View style={{ width: 220, marginRight: 12 }}>
+                <ProductCard
+                  book={item}
+                  onPress={() => navigation.navigate("BookDetail", { bookId: item.id })}
+                />
               </View>
             )}
+          />
+        </View>
 
-            {error && (
-              <Text
-                variant="bodySmall"
-                style={{ color: theme.colors.error, marginBottom: 8 }}
-              >
-                {error}
-              </Text>
+        <View style={{ marginTop: 24 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Text
+              variant="titleMedium"
+              style={{ fontWeight: "800", color: theme.colors.onSurface }}
+            >
+              Giảm giá nhiều nhất
+            </Text>
+          </View>
+
+          {loadingTopDiscounted && (
+            <View style={{ marginVertical: 8, alignItems: "center" }}>
+              <ActivityIndicator />
+            </View>
+          )}
+
+          {topDiscountedError && (
+            <Text
+              variant="bodySmall"
+              style={{ color: theme.colors.error, marginTop: 4 }}
+            >
+              {topDiscountedError}
+            </Text>
+          )}
+
+          <FlatList
+            data={topDiscounted}
+            keyExtractor={(item) => `disc-${item.id}`}
+            numColumns={2}
+            scrollEnabled={false}
+            contentContainerStyle={{ paddingTop: 6 }}
+            renderItem={({ item }) => (
+              <ProductCard
+                book={item}
+                onPress={() => navigation.navigate("BookDetail", { bookId: item.id })}
+              />
             )}
+          />
+        </View>
 
-            <View style={{ marginTop: 16 }}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Text
-                  variant="titleMedium"
-                  style={{ fontWeight: "800", color: theme.colors.onSurface }}
-                >
-                  Top 10 bán chạy
-                </Text>
-              </View>
-
-              {loadingTopSelling && (
-                <View style={{ marginVertical: 8, alignItems: "center" }}>
-                  <ActivityIndicator />
-                </View>
-              )}
-
-              {topSellingError && (
-                <Text
-                  variant="bodySmall"
-                  style={{ color: theme.colors.error, marginTop: 4 }}
-                >
-                  {topSellingError}
-                </Text>
-              )}
-
-              <FlatList
-                data={topSelling}
-                keyExtractor={(item) => `top-${item.id}`}
-                horizontal
-                showsHorizontalScrollIndicator={true}
-                contentContainerStyle={{ paddingTop: 6, paddingRight: 4 }}
-                renderItem={({ item }) => (
-                  <View style={{ width: 220, marginRight: 12 }}>
-                    <ProductCard
-                      book={item}
-                      onPress={() => navigation.navigate("BookDetail", { bookId: item.id })}
-                    />
-                  </View>
-                )}
-              />
-            </View>
-
-            <View style={{ marginTop: 24 }}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Text
-                  variant="titleMedium"
-                  style={{ fontWeight: "800", color: theme.colors.onSurface }}
-                >
-                  Giảm giá nhiều nhất
-                </Text>
-              </View>
-
-              {loadingTopDiscounted && (
-                <View style={{ marginVertical: 8, alignItems: "center" }}>
-                  <ActivityIndicator />
-                </View>
-              )}
-
-              {topDiscountedError && (
-                <Text
-                  variant="bodySmall"
-                  style={{ color: theme.colors.error, marginTop: 4 }}
-                >
-                  {topDiscountedError}
-                </Text>
-              )}
-
-              <FlatList
-                data={topDiscounted}
-                keyExtractor={(item) => `disc-${item.id}`}
-                numColumns={2}
-                scrollEnabled={false}
-                contentContainerStyle={{ paddingTop: 6 }}
-                renderItem={({ item }) => (
-                  <ProductCard
-                    book={item}
-                    onPress={() => navigation.navigate("BookDetail", { bookId: item.id })}
-                  />
-                )}
-              />
-            </View>
-
-            <View style={{ marginTop: 24 }}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Text
-                  variant="titleMedium"
-                  style={{ fontWeight: "800", color: theme.colors.onSurface }}
-                >
-                  Tất cả sách
-                </Text>
-              </View>
-            </View>
-          </FormCard>
+        <View style={{ marginTop: 24 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Text
+              variant="titleMedium"
+              style={{ fontWeight: "800", color: theme.colors.onSurface }}
+            >
+              Tất cả sách
+            </Text>
+          </View>
         </View>
       </View>
     );
@@ -356,34 +337,45 @@ export function HomeScreen() {
         onSearchSubmit={handleSearch}
       />
 
-      <FlatList
-        data={books}
-        keyExtractor={(item) => String(item.id)}
-        numColumns={2}
-        ListHeaderComponent={renderHeader}
-        contentContainerStyle={{
-          paddingBottom: 16,
+      <View
+        style={{
+          flex: 1,
+          paddingHorizontal: 16,
+          paddingVertical: 16,
+          alignItems: "center",
         }}
-        onEndReached={handleNextPage}
-        onEndReachedThreshold={0.5}
-        renderItem={({ item }) => (
-          <View style={{ paddingHorizontal: 16, marginTop: 6 }}>
-            <View style={{ width: "100%", maxWidth: 720, alignSelf: "center" }}>
-              <ProductCard
-                book={item}
-                onPress={() => navigation.navigate("BookDetail", { bookId: item.id })}
-              />
-            </View>
-          </View>
-        )}
-        ListFooterComponent={
-          loadingBooks && books.length > 0 ? (
-            <View style={{ paddingVertical: 12, alignItems: "center" }}>
-              <ActivityIndicator />
-            </View>
-          ) : null
-        }
-      />
+      >
+        <View style={{ width: "100%", maxWidth: 720, flex: 1 }}>
+          <FormCard>
+            <FlatList
+              data={books}
+              keyExtractor={(item) => String(item.id)}
+              numColumns={2}
+              ListHeaderComponent={renderHeader}
+              contentContainerStyle={{
+                paddingBottom: 16,
+              }}
+              onEndReached={handleNextPage}
+              onEndReachedThreshold={0.5}
+              renderItem={({ item }) => (
+                <View style={{ marginTop: 6 }}>
+                  <ProductCard
+                    book={item}
+                    onPress={() => navigation.navigate("BookDetail", { bookId: item.id })}
+                  />
+                </View>
+              )}
+              ListFooterComponent={
+                loadingBooks && books.length > 0 ? (
+                  <View style={{ paddingVertical: 12, alignItems: "center" }}>
+                    <ActivityIndicator />
+                  </View>
+                ) : null
+              }
+            />
+          </FormCard>
+        </View>
+      </View>
     </Surface>
   );
 }
