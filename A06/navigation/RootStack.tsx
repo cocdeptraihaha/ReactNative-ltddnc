@@ -1,12 +1,14 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { WelcomeScreen } from "../screens/WelcomeScreen";
-import { LoginScreen } from "../screens/LoginScreen";
-import { RegisterScreen } from "../screens/RegisterScreen";
-import { VerifyOtpScreen } from "../screens/VerifyOtpScreen";
-import { ForgotPasswordScreen } from "../screens/ForgotPasswordScreen";
-import { ResetPasswordScreen } from "../screens/ResetPasswordScreen";
-import { BookDetailScreen } from "../screens/BookDetailScreen";
-import { CheckoutScreen } from "../screens/CheckoutScreen";
+import {
+  WelcomeScreen,
+  LoginScreen,
+  RegisterScreen,
+  VerifyOtpScreen,
+  ForgotPasswordScreen,
+  ResetPasswordScreen,
+  BookDetailScreen,
+  CheckoutScreen,
+} from "../screens";
 import { BottomTabs } from "./BottomTabs";
 
 export type RootStackParamList = {
@@ -18,7 +20,12 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   ResetPassword: { email: string };
   BookDetail: { bookId: number };
-  Checkout: undefined;
+  Checkout:
+    | {
+        mode?: "cart" | "single";
+        items?: { bookId: number; quantity: number }[];
+      }
+    | undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

@@ -9,4 +9,5 @@ export { VerifyOtpScreen } from "./VerifyOtpScreen";
 export { ForgotPasswordScreen } from "./ForgotPasswordScreen";
 export { ResetPasswordScreen } from "./ResetPasswordScreen";
 export { BookDetailScreen } from "./BookDetailScreen";
+export { CheckoutScreen } from "./CheckoutScreen";
 

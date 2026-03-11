@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { FlatList, View } from "react-native";
-import { ActivityIndicator, Appbar, Button, IconButton, Surface, Text, TextInput, useTheme } from "react-native-paper";
+import { ActivityIndicator, Appbar, Button, Checkbox, IconButton, Surface, Text, TextInput, useTheme } from "react-native-paper";
 import { Image } from "expo-image";
 import { useAuth } from "../context/AuthContext";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
@@ -20,6 +20,7 @@ export function CartScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   const loadCart = useCallback(async () => {
     if (!isReady || !token) return;
@@ -45,6 +46,11 @@ export function CartScreen() {
     }, [loadCart]),
   );
 
+  // Khi danh sách items thay đổi, mặc định chọn tất cả
+  useEffect(() => {
+    setSelectedIds(new Set(items.map((it) => it.id)));
+  }, [items]);
+
   if (!isReady || !token) {
     return (
       <Surface style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -57,10 +63,13 @@ export function CartScreen() {
   }
 
   const hasItems = items.length > 0;
+  const selectedItems = items.filter((it) => selectedIds.has(it.id));
+  const hasSelected = selectedItems.length > 0;
+
   let itemAmount = 0;
   let discountTotal = 0;
   let shippingFee = 30000;
-  for (const it of items) {
+  for (const it of selectedItems) {
     const price = it.price ?? 0; // giá đang hiển thị (đã discount nếu có)
     const original = it.original_price ?? it.price ?? 0; // giá gốc
     const qty = it.quantity ?? 0;
@@ -69,7 +78,32 @@ export function CartScreen() {
       discountTotal += (original - price) * qty;
     }
   }
-  const grandTotal =  itemAmount - discountTotal + shippingFee; // tổng tiền phải trả (đã áp dụng discount)
+  const grandTotal = itemAmount - discountTotal + (hasSelected ? shippingFee : 0); // tổng tiền phải trả (đã áp dụng discount)
+
+  const toggleSelectOne = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const allSelected = hasItems && selectedItems.length === items.length;
+  const toggleSelectAll = () => {
+    if (!hasItems) {
+      setSelectedIds(new Set());
+      return;
+    }
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(items.map((it) => it.id)));
+    }
+  };
 
   const handleChangeQty = async (item: CartItemWithBook, delta: number) => {
     if (!token) return;
@@ -152,12 +186,32 @@ export function CartScreen() {
           <FormCard>
             <View style={{ marginBottom: 12 }}>
               {hasItems && (
-                <Text
-                  variant="bodySmall"
-                  style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
                 >
-                  {items.length} sản phẩm
-                </Text>
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Checkbox
+                      status={allSelected ? "checked" : hasSelected ? "indeterminate" : "unchecked"}
+                      onPress={toggleSelectAll}
+                    />
+                    <Text
+                      variant="bodySmall"
+                      style={{ color: theme.colors.onSurface }}
+                    >
+                      Chọn tất cả
+                    </Text>
+                  </View>
+                  <Text
+                    variant="bodySmall"
+                    style={{ color: theme.colors.onSurfaceVariant }}
+                  >
+                    {selectedItems.length}/{items.length} sản phẩm
+                  </Text>
+                </View>
               )}
             </View>
 
@@ -207,6 +261,7 @@ export function CartScreen() {
                     const title = item.title ?? `Sách #${item.book_id}`;
                     const hasDiscount = original > price;
 
+                    const checked = selectedIds.has(item.id);
                     return (
                       <Swipeable
                         renderRightActions={() => (
@@ -230,7 +285,11 @@ export function CartScreen() {
                           </View>
                         )}
                       >
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                          <Checkbox
+                            status={checked ? "checked" : "unchecked"}
+                            onPress={() => toggleSelectOne(item.id)}
+                          />
                           <View
                             style={{
                               width: 56,
@@ -367,14 +426,16 @@ export function CartScreen() {
                       -{discountTotal.toLocaleString("vi-VN")} đ
                     </Text>
                   </View>
-                  <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                      Phí vận chuyển
-                    </Text>
-                    <Text variant="bodySmall" style={{ color: theme.colors.onSurface }}>
-                      {shippingFee.toLocaleString("vi-VN")} đ
-                    </Text>
-                  </View>
+                  {hasSelected && (
+                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                      <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                        Phí vận chuyển
+                      </Text>
+                      <Text variant="bodySmall" style={{ color: theme.colors.onSurface }}>
+                        {shippingFee.toLocaleString("vi-VN")} đ
+                      </Text>
+                    </View>
+                  )}
                   <View
                     style={{
                       height: 1,
@@ -397,8 +458,16 @@ export function CartScreen() {
                     mode="contained"
                     style={{ borderRadius: 999 }}
                     contentStyle={{ paddingVertical: 8 }}
-                    disabled={!hasItems}
-                    onPress={() => navigation.navigate("Checkout")}
+                    disabled={!hasSelected}
+                    onPress={() =>
+                      navigation.navigate("Checkout", {
+                        mode: "cart",
+                        items: selectedItems.map((it) => ({
+                          bookId: it.book_id,
+                          quantity: it.quantity ?? 0,
+                        })),
+                      })
+                    }
                   >
                     Thanh toán
                   </Button>

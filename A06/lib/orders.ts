@@ -25,6 +25,11 @@ export type OrderCheckoutSummary = {
   total_amount: number;
 };
 
+export type CheckoutItemPayload = {
+  book_id: number;
+  quantity: number;
+};
+
 export type CheckoutPayload = {
   note?: string | null;
   phone_number: string;
@@ -32,6 +37,7 @@ export type CheckoutPayload = {
   province?: string | null;
   ward?: string | null;
   promotion_code?: string | null;
+  items?: CheckoutItemPayload[] | null;
 };
 
 export async function checkoutFromCart(

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { ActivityIndicator, Appbar, Button, RadioButton, Surface, Text, TextInput, useTheme } from "react-native-paper";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RouteProp } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { getMyCart, type CartItemWithBook } from "../lib/cart";
 import { checkoutFromCart, type Order, type OrderCheckoutSummary } from "../lib/orders";
@@ -17,6 +18,7 @@ type Nav = NativeStackNavigationProp<RootStackParamList, "Checkout">;
 export function CheckoutScreen() {
   const theme = useTheme();
   const navigation = useNavigation<Nav>();
+  const route = useRoute<RouteProp<RootStackParamList, "Checkout">>();
   const { token, user, isReady } = useAuth();
 
   const [cartItems, setCartItems] = useState<CartItemWithBook[]>([]);
@@ -117,19 +119,45 @@ export function CheckoutScreen() {
 
   useEffect(() => {
     if (!isReady || !token) return;
+    const params = route.params;
     (async () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await getMyCart(token);
-        setCartItems(data);
+
+        // Nếu có danh sách items truyền vào (từ Cart hoặc Buy Now)
+        if (params?.items && params.items.length > 0) {
+          // Case: chọn từ cart -> dùng cart summary rồi filter theo bookId
+          const data = await getMyCart(token);
+          const byBookId = new Map<number, CartItemWithBook>();
+          for (const it of data) {
+            if (it.book_id != null) {
+              byBookId.set(it.book_id, it);
+            }
+          }
+          const mapped: CartItemWithBook[] = [];
+          for (const it of params.items) {
+            const row = byBookId.get(it.bookId);
+            if (row) {
+              mapped.push({
+                ...row,
+                quantity: it.quantity,
+              });
+            }
+          }
+          setCartItems(mapped);
+        } else {
+          // Mặc định: checkout toàn bộ giỏ như cũ
+          const data = await getMyCart(token);
+          setCartItems(data);
+        }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load cart");
       } finally {
         setLoading(false);
       }
     })();
-  }, [isReady, token]);
+  }, [isReady, token, route.params]);
 
   if (!isReady || !token) {
     return (
@@ -165,7 +193,7 @@ export function CheckoutScreen() {
 
   const handlePlaceOrder = async () => {
     if (!token) return;
-    if (!hasItems) {
+    if (!cartItems.length) {
       setError("Giỏ hàng trống.");
       return;
     }
@@ -176,6 +204,15 @@ export function CheckoutScreen() {
     try {
       setPlacing(true);
       setError(null);
+      const params = route.params;
+      const itemsPayload =
+        params?.items && params.items.length > 0
+          ? params.items.map((it) => ({
+              book_id: it.bookId,
+              quantity: it.quantity,
+            }))
+          : undefined;
+
       const summary = await checkoutFromCart(token, {
         note: note.trim() || undefined,
         phone_number: phone.trim(),
@@ -183,6 +220,7 @@ export function CheckoutScreen() {
         province: province.trim() || undefined,
         ward: ward.trim() || undefined,
         promotion_code: promo.trim() || undefined,
+        items: itemsPayload,
       });
       setLastOrder(summary.order);
       setServerSummary(summary);

@@ -105,6 +105,24 @@ export function BookDetailScreen() {
     }
   };
 
+  const handleBuyNow = async () => {
+    if (!token) {
+      setSnackbar({ visible: true, message: "Vui lòng đăng nhập để mua hàng." });
+      return;
+    }
+    try {
+      navigation.navigate("Checkout", {
+        mode: "single",
+        items: [{ bookId: book.id, quantity: 1 }],
+      });
+    } catch (e) {
+      setSnackbar({
+        visible: true,
+        message: "Không thể mua ngay. Vui lòng thử lại.",
+      });
+    }
+  };
+
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header
@@ -256,7 +274,7 @@ export function BookDetailScreen() {
           </Button>
           <Button
             mode="contained"
-            onPress={handleAddToCart}
+            onPress={handleBuyNow}
             style={{ flex: 1, borderRadius: 999 }}
             contentStyle={{ paddingVertical: 6 }}
           >
