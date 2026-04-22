@@ -5,6 +5,7 @@ import { HomeScreen } from "../screens/HomeScreen";
 import { ProfileScreen } from "../screens/ProfileScreen";
 import { NotificationsScreen } from "../screens/NotificationsScreen";
 import { CartScreen } from "../screens/CartScreen";
+import { useNotifications } from "../context/NotificationsContext";
 
 export type BottomTabParamList = {
   Home: undefined;
@@ -17,6 +18,7 @@ const Tab = createBottomTabNavigator<BottomTabParamList>();
 
 export function BottomTabs() {
   const theme = useTheme();
+  const { unreadCount } = useNotifications();
 
   return (
     <Tab.Navigator
@@ -34,7 +36,9 @@ export function BottomTabs() {
             route.name === "Home"
               ? "home-variant"
               : route.name === "Notifications"
-                ? "bell-outline"
+                ? unreadCount > 0
+                  ? "bell-ring-outline"
+                  : "bell-outline"
                 : route.name === "Cart"
                   ? "cart-outline"
                   : "account-circle-outline";
@@ -46,7 +50,10 @@ export function BottomTabs() {
       <Tab.Screen
         name="Notifications"
         component={NotificationsScreen}
-        options={{ title: "Notifications" }}
+        options={{
+          title: "Notifications",
+          tabBarBadge: unreadCount > 0 ? (unreadCount > 99 ? "99+" : unreadCount) : undefined,
+        }}
       />
       <Tab.Screen name="Cart" component={CartScreen} options={{ title: "Cart" }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: "Profile" }} />

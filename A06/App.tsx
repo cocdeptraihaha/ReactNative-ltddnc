@@ -4,6 +4,7 @@ import { NavigationContainer, useNavigationContainerRef } from "@react-navigatio
 import { PaperProvider } from "react-native-paper";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { NotificationsProvider } from "./context/NotificationsContext";
 import { RootStack } from "./navigation/RootStack";
 import { theme } from "./theme";
 import { setOnUnauthorized } from "./lib/api";
@@ -35,7 +36,9 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <PaperProvider theme={theme}>
         <AuthProvider>
-          <AppContent />
+          <NotificationsProvider>
+            <AppContent />
+          </NotificationsProvider>
         </AuthProvider>
       </PaperProvider>
     </GestureHandlerRootView>

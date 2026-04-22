@@ -1,7 +1,19 @@
-// export const API_BASE = "https://kebook.apn.leapcell.app/api/v1";
-// IMPORTANT: must include scheme (http/https), otherwise fetch will fail.
-export const API_BASE = "http://localhost:8000/api/v1";
+/**
+ * Một nơi cấu hình URL API cho toàn app. Ưu tiên biến môi trường (Expo):
+ * tạo `A06/.env` từ `.env.example`, ví dụ:
+ *   EXPO_PUBLIC_API_BASE=http://192.168.1.10:8000/api/v1
+ * (phải có `http`/`https` và đoạn `/api/v1` ở cuối.)
+ * Đổi .env cần restart `expo start` / Metro.
+ */
+const defaultApiBase = "https://kebook.apn.leapcell.app/api/v1";
+const localApiBase = "http://localhost:8000/api/v1" ;
+export const API_BASE = localApiBase;
 
+/** Base WS (http→ws, https→wss), cùng path prefix với REST (/api/v1). */
+export function getNotificationsWebSocketUrl(token: string): string {
+  const wsBase = API_BASE.replace(/^http/, "ws").replace(/\/$/, "");
+  return `${wsBase}/ws/notifications?token=${encodeURIComponent(token)}`;
+}
 
 export type UploadAvatarResponse = {
   url: string;
