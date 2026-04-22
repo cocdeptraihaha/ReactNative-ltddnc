@@ -3,6 +3,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   View,
 } from "react-native";
@@ -145,10 +146,16 @@ export function RegisterScreen() {
               autoCapitalize="none"
               left={<TextInput.Icon icon="lock-outline" />}
               right={
-                <TextInput.Icon
-                  icon={showPassword ? "eye" : "eye-off"}
+                <Pressable
                   onPress={() => setShowPassword(!showPassword)}
-                />
+                  style={{ width: 40, height: 40, alignItems: "center", justifyContent: "center" }}
+                >
+                  <MaterialCommunityIcons
+                    name={showPassword ? "eye" : "eye-off"}
+                    size={20}
+                    color={theme.colors.onSurfaceVariant}
+                  />
+                </Pressable>
               }
             />
 
@@ -160,10 +167,16 @@ export function RegisterScreen() {
               autoCapitalize="none"
               left={<TextInput.Icon icon="lock-check-outline" />}
               right={
-                <TextInput.Icon
-                  icon={showConfirmPassword ? "eye" : "eye-off"}
+                <Pressable
                   onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                />
+                  style={{ width: 40, height: 40, alignItems: "center", justifyContent: "center" }}
+                >
+                  <MaterialCommunityIcons
+                    name={showConfirmPassword ? "eye" : "eye-off"}
+                    size={20}
+                    color={theme.colors.onSurfaceVariant}
+                  />
+                </Pressable>
               }
             />
 

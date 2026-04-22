@@ -98,7 +98,12 @@ export function LoginScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
-              left={<TextInput.Icon icon="email-outline" />}
+              left={
+                <TextInput.Icon
+                  icon="email-outline"
+                  disabled
+                />
+              }
             />
 
             <AppTextInput
@@ -107,7 +112,12 @@ export function LoginScreen() {
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
               autoCapitalize="none"
-              left={<TextInput.Icon icon="lock-outline" />}
+              left={
+                <TextInput.Icon
+                  icon="lock-outline"
+                  disabled
+                />
+              }
               right={
                 <TextInput.Icon
                   icon={showPassword ? "eye" : "eye-off"}

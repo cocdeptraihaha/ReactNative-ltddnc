@@ -32,6 +32,9 @@ export type BookDetail = {
 
 export type BookWithDetail = Book & {
   book_detail?: BookDetail | null;
+  buyer_count?: number;
+  review_count?: number;
+  view_count?: number;
 };
 
 export type Page<T> = {
@@ -74,6 +77,10 @@ export async function getBooks(params: {
 
 export async function getBook(id: number): Promise<BookWithDetail> {
   return apiFetch<BookWithDetail>(`/books/${id}`);
+}
+
+export async function getSimilarBooks(bookId: number, limit = 10): Promise<Book[]> {
+  return apiFetch<Book[]>(`/books/${bookId}/similar?limit=${limit}`);
 }
 
 export async function getTopSellingBooks(limit = 10): Promise<Book[]> {

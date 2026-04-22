@@ -7,6 +7,10 @@ import type { Book } from "../lib/books";
 export function ProductCard(props: {
   book: Book;
   onPress?: () => void;
+  /** Hiện nút yêu thích (góc ảnh) */
+  showFavorite?: boolean;
+  isFavorite?: boolean;
+  onFavoriteToggle?: () => void;
 }) {
   const theme = useTheme();
   const b = props.book;
@@ -98,6 +102,32 @@ export function ProductCard(props: {
               </Text>
             </View>
           )}
+          {props.showFavorite && props.onFavoriteToggle ? (
+            <Pressable
+              onPress={(e) => {
+                e?.stopPropagation?.();
+                props.onFavoriteToggle?.();
+              }}
+              hitSlop={8}
+              style={{
+                position: "absolute",
+                top: 6,
+                right: 6,
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                backgroundColor: "rgba(0,0,0,0.35)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <MaterialCommunityIcons
+                name={props.isFavorite ? "heart" : "heart-outline"}
+                size={22}
+                color={props.isFavorite ? theme.colors.error : "#fff"}
+              />
+            </Pressable>
+          ) : null}
         </View>
 
         {/* ── Info ── */}

@@ -10,6 +10,7 @@ export type PromotionPreviewResponse = {
 export async function previewPromotion(
   code: string,
   orderTotal: number,
+  token?: string | null,
 ): Promise<PromotionPreviewResponse> {
   const trimmed = code.trim();
   if (!trimmed) {
@@ -23,7 +24,12 @@ export async function previewPromotion(
 
   const url = `${API_BASE}/promotions/validate?${params.toString()}`;
 
-  const res = await fetch(url);
+  const headers: HeadersInit = {};
+  if (token) {
+    (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(url, { headers });
   let data: any = null;
   try {
     data = await res.json();

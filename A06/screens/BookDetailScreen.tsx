@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ScrollView, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { FlatList, ScrollView, View } from "react-native";
 import { Image } from "expo-image";
 import {
   ActivityIndicator,
@@ -16,7 +16,9 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RouteProp } from "@react-navigation/native";
 import type { RootStackParamList } from "../navigation/RootStack";
-import { getBook, type BookWithDetail } from "../lib/books";
+import { getBook, getSimilarBooks, type Book, type BookWithDetail } from "../lib/books";
+import { recordBookView } from "../lib/bookViews";
+import { addFavorite, checkFavorites, removeFavorite } from "../lib/favorites";
 import {
   getBookAvgAndCount,
   getEligibility,
@@ -28,6 +30,7 @@ import {
 import { formatDateVN } from "../utils/date";
 import { useAuth } from "../context/AuthContext";
 import { addToCart } from "../lib/cart";
+import { ProductCard } from "../components/ProductCard";
 
 type BookDetailNav = NativeStackNavigationProp<RootStackParamList, "BookDetail">;
 type BookDetailRoute = RouteProp<RootStackParamList, "BookDetail">;
@@ -46,6 +49,8 @@ export function BookDetailScreen() {
   const [reviewAvg, setReviewAvg] = useState<BookAvgRateOut | null>(null);
   const [reviewList, setReviewList] = useState<ReviewWithUser[]>([]);
   const [reviewElig, setReviewElig] = useState<EligibilityResponse | null>(null);
+  const [similarBooks, setSimilarBooks] = useState<Book[]>([]);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -90,6 +95,67 @@ export function BookDetailScreen() {
       cancelled = true;
     };
   }, [bookId, token]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const sim = await getSimilarBooks(bookId, 12);
+        if (!cancelled) setSimilarBooks(sim);
+      } catch {
+        if (!cancelled) setSimilarBooks([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [bookId]);
+
+  useEffect(() => {
+    if (!token || !book) return;
+    (async () => {
+      try {
+        await recordBookView(token, bookId);
+      } catch {
+        /* ignore */
+      }
+    })();
+  }, [token, book, bookId]);
+
+  useEffect(() => {
+    if (!token) {
+      setIsFavorite(false);
+      return;
+    }
+    (async () => {
+      try {
+        const m = await checkFavorites(token, [bookId]);
+        setIsFavorite(Boolean(m[bookId]));
+      } catch {
+        setIsFavorite(false);
+      }
+    })();
+  }, [token, bookId]);
+
+  const toggleFavorite = useCallback(async () => {
+    if (!token) {
+      setSnackbar({ visible: true, message: "Vui lòng đăng nhập." });
+      return;
+    }
+    try {
+      if (isFavorite) {
+        await removeFavorite(token, bookId);
+        setIsFavorite(false);
+        setSnackbar({ visible: true, message: "Đã bỏ yêu thích." });
+      } else {
+        await addFavorite(token, bookId);
+        setIsFavorite(true);
+        setSnackbar({ visible: true, message: "Đã thêm vào yêu thích." });
+      }
+    } catch {
+      setSnackbar({ visible: true, message: "Không cập nhật được yêu thích." });
+    }
+  }, [token, bookId, isFavorite]);
 
   if (loading && !book) {
     return (
@@ -146,6 +212,13 @@ export function BookDetailScreen() {
       <Appbar.Header elevated>
         <Appbar.BackAction onPress={() => navigation.goBack()} />
         <Appbar.Content title="Chi tiết sách" titleStyle={{ fontWeight: "700" }} />
+        {token ? (
+          <Appbar.Action
+            icon={isFavorite ? "heart" : "heart-outline"}
+            color={isFavorite ? theme.colors.error : undefined}
+            onPress={toggleFavorite}
+          />
+        ) : null}
       </Appbar.Header>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
@@ -275,7 +348,76 @@ export function BookDetailScreen() {
             </View>
           )}
 
+          {/* ── Stats ── */}
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              gap: 8,
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 20,
+                backgroundColor: theme.colors.secondaryContainer,
+              }}
+            >
+              <Text variant="labelSmall" style={{ color: theme.colors.onSecondaryContainer }}>
+                {book.buyer_count ?? 0} khách đã mua
+              </Text>
+            </View>
+            <View
+              style={{
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 20,
+                backgroundColor: theme.colors.secondaryContainer,
+              }}
+            >
+              <Text variant="labelSmall" style={{ color: theme.colors.onSecondaryContainer }}>
+                {book.review_count ?? 0} bình luận
+              </Text>
+            </View>
+            <View
+              style={{
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 20,
+                backgroundColor: theme.colors.secondaryContainer,
+              }}
+            >
+              <Text variant="labelSmall" style={{ color: theme.colors.onSecondaryContainer }}>
+                {book.view_count ?? 0} lượt xem
+              </Text>
+            </View>
+          </View>
+
           <Divider />
+
+          {/* ── Similar ── */}
+          {similarBooks.length > 0 ? (
+            <View>
+              <SectionLabel text="Sản phẩm tương tự" />
+              <FlatList
+                data={similarBooks}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(item) => `sim-${item.id}`}
+                contentContainerStyle={{ gap: 10, paddingVertical: 4 }}
+                renderItem={({ item }) => (
+                  <View style={{ width: 160 }}>
+                    <ProductCard
+                      book={item}
+                      onPress={() => navigation.navigate("BookDetail", { bookId: item.id })}
+                    />
+                  </View>
+                )}
+              />
+            </View>
+          ) : null}
 
           {/* ── Description ── */}
           {d?.description && (

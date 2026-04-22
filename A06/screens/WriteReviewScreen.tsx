@@ -95,7 +95,10 @@ export function WriteReviewScreen() {
           rate,
           content: content.trim() || null,
         });
-        Alert.alert("Thành công", "Đã gửi đánh giá.");
+        Alert.alert(
+          "Thành công",
+          "Đã gửi đánh giá. Bạn nhận điểm tích lũy (xem trong Hồ sơ → Điểm tích lũy).",
+        );
       }
       nav.goBack();
     } catch (e) {

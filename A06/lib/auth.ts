@@ -5,6 +5,7 @@ export type User = {
   email: string;
   username?: string;
   full_name?: string;
+  loyalty_points?: number;
   address?: string;
   province?: string;  // Thành phố/Tỉnh
   ward?: string;     // Phường/Xã

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ScrollView, View } from "react-native";
+import { Modal, ScrollView, View } from "react-native";
 import {
   ActivityIndicator,
   Appbar,
@@ -28,6 +28,7 @@ import {
   type WardItem,
 } from "../lib/addresses";
 import { previewPromotion } from "../lib/promotions";
+import { getMyOwnedPromotions, type OwnedPromotion } from "../lib/myPromotions";
 
 type Nav = NativeStackNavigationProp<RootStackParamList, "Checkout">;
 
@@ -54,6 +55,8 @@ export function CheckoutScreen() {
   const [loadingWards, setLoadingWards] = useState(false);
   const [promoPreviewDiscount, setPromoPreviewDiscount] = useState(0);
   const [promoChecking, setPromoChecking] = useState(false);
+  const [voucherModal, setVoucherModal] = useState(false);
+  const [ownedVouchers, setOwnedVouchers] = useState<OwnedPromotion[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -74,7 +77,7 @@ export function CheckoutScreen() {
     const h = setTimeout(async () => {
       try {
         setPromoChecking(true);
-        const res = await previewPromotion(code, subtotal);
+        const res = await previewPromotion(code, subtotal, token);
         if (!res.valid) { setPromoPreviewDiscount(0); setError(res.message || "Mã không hợp lệ"); }
         else { setPromoPreviewDiscount(res.discount_amount); setError(null); }
       } catch (e) {
@@ -84,6 +87,18 @@ export function CheckoutScreen() {
     }, 500);
     return () => clearTimeout(h);
   }, [promo, isReady, token, cartItems]);
+
+  const openVoucherPicker = async () => {
+    if (!token) return;
+    try {
+      const list = await getMyOwnedPromotions(token, true);
+      setOwnedVouchers(list);
+      setVoucherModal(true);
+    } catch {
+      setOwnedVouchers([]);
+      setVoucherModal(true);
+    }
+  };
 
   useEffect(() => { getProvinces().then(setProvinces).catch(() => {}); }, []);
 
@@ -283,6 +298,14 @@ export function CheckoutScreen() {
             dense
             right={promoChecking ? <TextInput.Icon icon="loading" /> : undefined}
           />
+          <Button
+            mode="outlined"
+            style={{ marginTop: 10, borderRadius: 10 }}
+            icon="ticket-confirmation-outline"
+            onPress={openVoucherPicker}
+          >
+            Chọn từ voucher của tôi
+          </Button>
         </Section>
 
         {/* ── Summary ── */}
@@ -344,6 +367,53 @@ export function CheckoutScreen() {
           Xác nhận đặt hàng
         </Button>
       </View>
+
+      <Modal visible={voucherModal} transparent animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.45)",
+            justifyContent: "center",
+            padding: 20,
+          }}
+        >
+          <Surface
+            style={{
+              borderRadius: 16,
+              padding: 16,
+              maxHeight: "70%",
+            }}
+          >
+            <Text variant="titleMedium" style={{ fontWeight: "700", marginBottom: 12 }}>
+              Voucher chưa dùng
+            </Text>
+            <ScrollView style={{ maxHeight: 360 }}>
+              {ownedVouchers.length === 0 ? (
+                <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                  Không có voucher khả dụng. Đổi điểm tại Hồ sơ → Đổi điểm lấy voucher.
+                </Text>
+              ) : (
+                ownedVouchers.map((v) => (
+                  <Button
+                    key={v.id}
+                    mode="contained-tonal"
+                    style={{ marginBottom: 8, alignItems: "flex-start" }}
+                    onPress={() => {
+                      if (v.code) setPromo(v.code);
+                      setVoucherModal(false);
+                    }}
+                  >
+                    {v.code ?? "—"} · {v.name ?? "Voucher"}
+                  </Button>
+                ))
+              )}
+            </ScrollView>
+            <Button mode="text" onPress={() => setVoucherModal(false)} style={{ marginTop: 8 }}>
+              Đóng
+            </Button>
+          </Surface>
+        </View>
+      </Modal>
     </Surface>
   );
 }
