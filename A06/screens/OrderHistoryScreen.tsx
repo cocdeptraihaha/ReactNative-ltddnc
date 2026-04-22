@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FlatList, Pressable, View } from "react-native";
 import {
   ActivityIndicator,
@@ -8,7 +8,7 @@ import {
   Text,
   useTheme,
 } from "react-native-paper";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootStack";
@@ -34,7 +34,15 @@ const FILTERS: { label: string; value: string | null }[] = [
 export function OrderHistoryScreen() {
   const theme = useTheme();
   const nav = useNavigation<Nav>();
+  const route = useRoute<RouteProp<RootStackParamList, "OrderHistory">>();
   const { token } = useAuth();
+
+  const paramStatusIn = route.params?.statusIn;
+  const [ignoreRouteBucket, setIgnoreRouteBucket] = useState(false);
+
+  useEffect(() => {
+    setIgnoreRouteBucket(false);
+  }, [paramStatusIn]);
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,13 +52,15 @@ export function OrderHistoryScreen() {
     if (!token) return;
     setLoading(true);
     try {
-      setOrders(await getMyOrders(token, filter));
+      const statusIn = !ignoreRouteBucket && paramStatusIn ? paramStatusIn : null;
+      const single = statusIn ? null : filter;
+      setOrders(await getMyOrders(token, single, statusIn));
     } catch {
       /* ignore */
     } finally {
       setLoading(false);
     }
-  }, [token, filter]);
+  }, [token, filter, paramStatusIn, ignoreRouteBucket]);
 
   useFocusEffect(
     useCallback(() => {
@@ -72,7 +82,21 @@ export function OrderHistoryScreen() {
       <Appbar.Header>
         <Appbar.BackAction onPress={() => nav.goBack()} />
         <Appbar.Content title="Lịch sử đơn hàng" />
+        <Appbar.Action icon="chart-box-outline" onPress={() => nav.navigate("OrderStats")} />
       </Appbar.Header>
+
+      {paramStatusIn && !ignoreRouteBucket ? (
+        <Text
+          variant="bodySmall"
+          style={{
+            paddingHorizontal: 12,
+            paddingBottom: 4,
+            color: theme.colors.onSurfaceVariant,
+          }}
+        >
+          Đang lọc theo nhóm từ thống kê. Chọn chip bên dưới để đổi bộ lọc.
+        </Text>
+      ) : null}
 
       <View
         style={{
@@ -83,17 +107,24 @@ export function OrderHistoryScreen() {
           gap: 6,
         }}
       >
-        {FILTERS.map((f) => (
-          <Chip
-            key={f.value ?? "all"}
-            selected={filter === f.value}
-            onPress={() => setFilter(f.value)}
-            mode={filter === f.value ? "flat" : "outlined"}
-            compact
-          >
-            {f.label}
-          </Chip>
-        ))}
+        {FILTERS.map((f) => {
+          const bucketActive = Boolean(paramStatusIn && !ignoreRouteBucket);
+          const selected = bucketActive ? false : filter === f.value;
+          return (
+            <Chip
+              key={f.value ?? "all"}
+              selected={selected}
+              onPress={() => {
+                setIgnoreRouteBucket(true);
+                setFilter(f.value);
+              }}
+              mode={selected ? "flat" : "outlined"}
+              compact
+            >
+              {f.label}
+            </Chip>
+          );
+        })}
       </View>
 
       {loading ? (

@@ -92,9 +92,13 @@ export async function checkoutFromCart(
 export async function getMyOrders(
   token: string,
   status?: string | null,
+  statusIn?: string | null,
 ): Promise<Order[]> {
-  const qs = status ? `?status=${encodeURIComponent(status)}` : "";
-  return apiFetch<Order[]>(`/orders/${qs}`, { token });
+  const params = new URLSearchParams();
+  if (statusIn) params.set("status_in", statusIn);
+  else if (status) params.set("status", status);
+  const qs = params.toString() ? `?${params}` : "";
+  return apiFetch<Order[]>(`/orders${qs}`, { token });
 }
 
 export async function getOrderDetail(

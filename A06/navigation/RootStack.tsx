@@ -9,10 +9,16 @@ import {
   BookDetailScreen,
   CheckoutScreen,
   OrderHistoryScreen,
+  OrderStatsScreen,
   OrderDetailScreen,
   AdminOrderManageScreen,
   AdminAddBookScreen,
   WriteReviewScreen,
+  PointsHistoryScreen,
+  FavoritesScreen,
+  RewardsScreen,
+  MyVouchersScreen,
+  PersonalInfoScreen,
 } from "../screens";
 import { BottomTabs } from "./BottomTabs";
 
@@ -31,11 +37,17 @@ export type RootStackParamList = {
         items?: { bookId: number; quantity: number }[];
       }
     | undefined;
-  OrderHistory: undefined;
+  OrderHistory: { statusIn?: string } | undefined;
+  OrderStats: undefined;
   OrderDetail: { orderId: number };
   WriteReview: { bookId: number; orderId?: number };
   AdminOrders: undefined;
   AdminAddBook: undefined;
+  PointsHistory: undefined;
+  Favorites: undefined;
+  Rewards: undefined;
+  MyVouchers: undefined;
+  PersonalInfo: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -56,8 +68,14 @@ export function RootStack() {
       <Stack.Screen name="BookDetail" component={BookDetailScreen} />
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
       <Stack.Screen name="OrderHistory" component={OrderHistoryScreen} />
+      <Stack.Screen name="OrderStats" component={OrderStatsScreen} />
       <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
       <Stack.Screen name="WriteReview" component={WriteReviewScreen} />
+      <Stack.Screen name="PointsHistory" component={PointsHistoryScreen} />
+      <Stack.Screen name="Favorites" component={FavoritesScreen} />
+      <Stack.Screen name="Rewards" component={RewardsScreen} />
+      <Stack.Screen name="MyVouchers" component={MyVouchersScreen} />
+      <Stack.Screen name="PersonalInfo" component={PersonalInfoScreen} />
       <Stack.Screen name="AdminOrders" component={AdminOrderManageScreen} />
       <Stack.Screen name="AdminAddBook" component={AdminAddBookScreen} />
     </Stack.Navigator>
