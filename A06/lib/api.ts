@@ -1,6 +1,6 @@
 // export const API_BASE = "https://kebook.apn.leapcell.app/api/v1";
 // IMPORTANT: must include scheme (http/https), otherwise fetch will fail.
-export const API_BASE = "http://192.168.1.201:8000/api/v1";
+export const API_BASE = "http://localhost:8000/api/v1";
 
 
 export type UploadAvatarResponse = {
@@ -47,6 +47,10 @@ export async function apiFetch<T>(
 
   if (res.status === 401 && token) {
     onUnauthorized?.();
+  }
+
+  if (res.status === 204 || res.status === 205) {
+    return undefined as T;
   }
 
   if (!res.ok) {

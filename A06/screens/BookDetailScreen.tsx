@@ -17,6 +17,14 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RouteProp } from "@react-navigation/native";
 import type { RootStackParamList } from "../navigation/RootStack";
 import { getBook, type BookWithDetail } from "../lib/books";
+import {
+  getBookAvgAndCount,
+  getEligibility,
+  listReviewsByBook,
+  type BookAvgRateOut,
+  type EligibilityResponse,
+  type ReviewWithUser,
+} from "../lib/reviews";
 import { formatDateVN } from "../utils/date";
 import { useAuth } from "../context/AuthContext";
 import { addToCart } from "../lib/cart";
@@ -35,6 +43,9 @@ export function BookDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState({ visible: false, message: "" });
+  const [reviewAvg, setReviewAvg] = useState<BookAvgRateOut | null>(null);
+  const [reviewList, setReviewList] = useState<ReviewWithUser[]>([]);
+  const [reviewElig, setReviewElig] = useState<EligibilityResponse | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -49,6 +60,36 @@ export function BookDetailScreen() {
       }
     })();
   }, [bookId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [avg, list] = await Promise.all([
+          getBookAvgAndCount(bookId),
+          listReviewsByBook(bookId, { skip: 0, limit: 5 }),
+        ]);
+        if (cancelled) return;
+        setReviewAvg(avg);
+        setReviewList(list);
+        if (token) {
+          const el = await getEligibility(token, bookId);
+          if (!cancelled) setReviewElig(el);
+        } else {
+          setReviewElig(null);
+        }
+      } catch {
+        if (!cancelled) {
+          setReviewAvg(null);
+          setReviewList([]);
+          setReviewElig(null);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [bookId, token]);
 
   if (loading && !book) {
     return (
@@ -249,6 +290,71 @@ export function BookDetailScreen() {
             </View>
           )}
 
+          {/* ── Reviews ── */}
+          <View>
+            <SectionLabel text="Đánh giá từ độc giả" />
+            <View
+              style={{
+                backgroundColor: theme.colors.surface,
+                borderRadius: 12,
+                padding: 14,
+                borderWidth: 1,
+                borderColor: theme.colors.outlineVariant,
+              }}
+            >
+              {reviewAvg && (reviewAvg.avg_rate != null || reviewAvg.total_reviews > 0) ? (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                  <StarRow theme={theme} value={reviewAvg.avg_rate ?? 0} />
+                  <Text variant="titleMedium" style={{ fontWeight: "700" }}>
+                    {reviewAvg.avg_rate != null
+                      ? reviewAvg.avg_rate.toFixed(1)
+                      : "—"}
+                  </Text>
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                    ({reviewAvg.total_reviews} đánh giá)
+                  </Text>
+                </View>
+              ) : (
+                <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                  Chưa có đánh giá.
+                </Text>
+              )}
+              {reviewList.length > 0 ? (
+                <View style={{ marginTop: 8, gap: 12 }}>
+                  {reviewList.map((rv) => (
+                    <View key={rv.id}>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                        <Text variant="labelLarge" style={{ fontWeight: "700" }}>
+                          {rv.user?.full_name || rv.user?.username || "Độc giả"}
+                        </Text>
+                        <StarRow theme={theme} value={rv.rate ?? 0} max={5} size={16} />
+                      </View>
+                      {rv.content ? (
+                        <Text variant="bodySmall" style={{ marginTop: 4, opacity: 0.85 }}>
+                          {rv.content}
+                        </Text>
+                      ) : null}
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+              {token && reviewElig && (reviewElig.eligible || reviewElig.already_reviewed) ? (
+                <Button
+                  mode="contained"
+                  style={{ marginTop: 16, borderRadius: 12 }}
+                  onPress={() => navigation.navigate("WriteReview", { bookId })}
+                >
+                  {reviewElig.already_reviewed ? "Sửa đánh giá" : "Đánh giá"}
+                </Button>
+              ) : null}
+              {!token ? (
+                <Text variant="bodySmall" style={{ marginTop: 12, color: theme.colors.onSurfaceVariant }}>
+                  Đăng nhập để đánh giá sách này.
+                </Text>
+              ) : null}
+            </View>
+          </View>
+
           {/* ── Details grid ── */}
           <View>
             <SectionLabel text="Thông tin chi tiết" />
@@ -340,6 +446,32 @@ export function BookDetailScreen() {
         {snackbar.message}
       </Snackbar>
     </Surface>
+  );
+}
+
+function StarRow({
+  theme,
+  value,
+  max = 5,
+  size = 22,
+}: {
+  theme: ReturnType<typeof useTheme>;
+  value: number;
+  max?: number;
+  size?: number;
+}) {
+  const filled = Math.round(value);
+  return (
+    <View style={{ flexDirection: "row" }}>
+      {Array.from({ length: max }, (_, i) => (
+        <MaterialCommunityIcons
+          key={i}
+          name={i < filled ? "star" : "star-outline"}
+          size={size}
+          color={i < filled ? theme.colors.primary : theme.colors.outline}
+        />
+      ))}
+    </View>
   );
 }
 

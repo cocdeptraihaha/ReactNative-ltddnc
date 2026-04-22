@@ -12,6 +12,7 @@ import {
   OrderDetailScreen,
   AdminOrderManageScreen,
   AdminAddBookScreen,
+  WriteReviewScreen,
 } from "../screens";
 import { BottomTabs } from "./BottomTabs";
 
@@ -32,6 +33,7 @@ export type RootStackParamList = {
     | undefined;
   OrderHistory: undefined;
   OrderDetail: { orderId: number };
+  WriteReview: { bookId: number; orderId?: number };
   AdminOrders: undefined;
   AdminAddBook: undefined;
 };
@@ -55,6 +57,7 @@ export function RootStack() {
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
       <Stack.Screen name="OrderHistory" component={OrderHistoryScreen} />
       <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
+      <Stack.Screen name="WriteReview" component={WriteReviewScreen} />
       <Stack.Screen name="AdminOrders" component={AdminOrderManageScreen} />
       <Stack.Screen name="AdminAddBook" component={AdminAddBookScreen} />
     </Stack.Navigator>

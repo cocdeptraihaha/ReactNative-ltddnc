@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, ScrollView, View } from "react-native";
 import {
   ActivityIndicator,
@@ -12,7 +12,10 @@ import {
 } from "react-native-paper";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../navigation/RootStack";
 import { useAuth } from "../context/AuthContext";
+import { getEligibility, type EligibilityResponse } from "../lib/reviews";
 import {
   getOrderDetail,
   cancelOrder,
@@ -23,6 +26,7 @@ import {
 } from "../lib/orders";
 
 type Params = { orderId: number };
+type OrderDetailNav = NativeStackNavigationProp<RootStackParamList, "OrderDetail">;
 
 const TIMELINE_ORDER = [
   "PENDING",
@@ -35,7 +39,7 @@ const TIMELINE_ORDER = [
 
 export function OrderDetailScreen() {
   const theme = useTheme();
-  const nav = useNavigation();
+  const nav = useNavigation<OrderDetailNav>();
   const route = useRoute<RouteProp<{ OrderDetail: Params }, "OrderDetail">>();
   const { token } = useAuth();
 
@@ -46,6 +50,7 @@ export function OrderDetailScreen() {
   const [cancelling, setCancelling] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [showCancelInput, setShowCancelInput] = useState(false);
+  const [eligByBook, setEligByBook] = useState<Record<number, EligibilityResponse>>({});
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -60,6 +65,49 @@ export function OrderDetailScreen() {
   }, [token, orderId]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  const statusKey = order?.status ?? "";
+  const reviewableOrder = statusKey === "DELIVERED" || statusKey === "COMPLETED";
+
+  const reviewBookIds = useMemo(() => {
+    if (!order || !reviewableOrder) return [];
+    const s = new Set<number>();
+    for (const oi of order.order_items ?? []) {
+      if (oi.book_id != null) s.add(oi.book_id);
+    }
+    return [...s];
+  }, [order, reviewableOrder]);
+
+  const reviewBookIdsKey = reviewBookIds.join(",");
+
+  useEffect(() => {
+    if (!token || reviewBookIds.length === 0) {
+      setEligByBook({});
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const results = await Promise.all(
+        reviewBookIds.map(async (bid) => {
+          try {
+            const e = await getEligibility(token, bid);
+            return [bid, e] as const;
+          } catch {
+            return [bid, null] as const;
+          }
+        }),
+      );
+      if (cancelled) return;
+      const next: Record<number, EligibilityResponse> = {};
+      for (const [bid, e] of results) {
+        if (e) next[bid] = e;
+      }
+      setEligByBook(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token, reviewBookIdsKey]);
 
   const fmtDate = (d?: string | null) => {
     if (!d) return "";
@@ -102,7 +150,6 @@ export function OrderDetailScreen() {
     );
   }
 
-  const statusKey = order.status ?? "";
   const canCancel = !["CANCELLED", "COMPLETED", "DELIVERED", "RETURNED", "CANCEL_REQUESTED"].includes(statusKey);
 
   const history = [...(order.status_history ?? [])].sort(
@@ -164,23 +211,47 @@ export function OrderDetailScreen() {
 
         {/* ── Items ── */}
         <Card theme={theme} title="Sản phẩm">
-          {(order.order_items ?? []).map((oi) => (
-            <View
-              key={oi.id}
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                paddingVertical: 6,
-              }}
-            >
-              <Text variant="bodyMedium">
-                {oi.book_title || `#${oi.book_id}`} x{oi.quantity}
-              </Text>
-              <Text variant="bodyMedium" style={{ fontWeight: "600" }}>
-                {fmtPrice(oi.price * oi.quantity)}
-              </Text>
-            </View>
-          ))}
+          {(order.order_items ?? []).map((oi) => {
+            const e = oi.book_id != null ? eligByBook[oi.book_id] : undefined;
+            const showReview =
+              !!token &&
+              reviewableOrder &&
+              oi.book_id != null &&
+              e &&
+              (e.eligible || e.already_reviewed);
+            return (
+              <View key={oi.id} style={{ paddingVertical: 6 }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Text variant="bodyMedium">
+                    {oi.book_title || `#${oi.book_id}`} x{oi.quantity}
+                  </Text>
+                  <Text variant="bodyMedium" style={{ fontWeight: "600" }}>
+                    {fmtPrice(oi.price * oi.quantity)}
+                  </Text>
+                </View>
+                {showReview ? (
+                  <Button
+                    mode="contained-tonal"
+                    compact
+                    style={{ alignSelf: "flex-start", marginTop: 8 }}
+                    onPress={() =>
+                      nav.navigate("WriteReview", {
+                        bookId: oi.book_id!,
+                        orderId: order.id,
+                      })
+                    }
+                  >
+                    {e!.already_reviewed ? "Sửa đánh giá" : "Đánh giá"}
+                  </Button>
+                ) : null}
+              </View>
+            );
+          })}
           <Divider style={{ marginVertical: 8 }} />
           <View
             style={{

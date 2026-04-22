@@ -12,6 +12,7 @@ export { BookDetailScreen } from "./BookDetailScreen";
 export { CheckoutScreen } from "./CheckoutScreen";
 export { OrderHistoryScreen } from "./OrderHistoryScreen";
 export { OrderDetailScreen } from "./OrderDetailScreen";
+export { WriteReviewScreen } from "./WriteReviewScreen";
 export { AdminOrderManageScreen } from "./AdminOrderManageScreen";
 export { AdminAddBookScreen } from "./AdminAddBookScreen";
 
