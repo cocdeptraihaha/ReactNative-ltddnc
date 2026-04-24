@@ -34,6 +34,8 @@ export type OrderCheckoutSummary = {
   discount_total: number;
   shipping_fee: number;
   total_amount: number;
+  loyalty_points_redeemed?: number;
+  points_discount_amount?: number;
 };
 
 export type CheckoutItemPayload = {
@@ -49,6 +51,7 @@ export type CheckoutPayload = {
   province?: string | null;
   ward?: string | null;
   promotion_code?: string | null;
+  loyalty_points_to_redeem?: number | null;
   items?: CheckoutItemPayload[] | null;
 };
 

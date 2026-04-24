@@ -57,6 +57,7 @@ export function CheckoutScreen() {
   const [promoChecking, setPromoChecking] = useState(false);
   const [voucherModal, setVoucherModal] = useState(false);
   const [ownedVouchers, setOwnedVouchers] = useState<OwnedPromotion[]>([]);
+  const [loyaltyPointsStr, setLoyaltyPointsStr] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -171,7 +172,20 @@ export function CheckoutScreen() {
   const itemAmountDisplay = serverSummary?.item_amount ?? itemAmount;
   const shippingFeeDisplay = serverSummary?.shipping_fee ?? (hasItems ? shippingFee : 0);
   const promoDiscountDisplay = serverSummary?.discount_total ?? promoPreviewDiscount;
-  const totalDisplay = serverSummary?.total_amount ?? (grandTotal - promoPreviewDiscount);
+  const userLoyalty = Math.max(0, Number((user as { loyalty_points?: number })?.loyalty_points ?? 0));
+  const rawWantPts = parseInt(loyaltyPointsStr.trim(), 10);
+  const wantPts = Number.isFinite(rawWantPts) && rawWantPts > 0 ? rawWantPts : 0;
+  const subAfterBookDisc = itemAmount - discountTotal;
+  const afterPromo = Math.max(0, subAfterBookDisc - promoDiscountDisplay);
+  const maxPct = 0.5;
+  const capVnd = Math.min(afterPromo, afterPromo * maxPct);
+  const maxPtsByCap = Math.floor(capVnd);
+  const appliedPtsEst = Math.min(wantPts, maxPtsByCap, userLoyalty);
+  const pointsMoneyEst = appliedPtsEst;
+  const pointsDiscountDisplay = serverSummary?.points_discount_amount ?? pointsMoneyEst;
+  const totalDisplay =
+    serverSummary?.total_amount ??
+    Math.max(0, afterPromo - pointsMoneyEst + (hasItems ? shippingFee : 0));
 
   const fmtPrice = (n: number) => n.toLocaleString("vi-VN") + "đ";
 
@@ -184,6 +198,7 @@ export function CheckoutScreen() {
       const itemsPayload = params?.items?.length
         ? (params.items as { bookId: number; quantity: number }[]).map((it) => ({ book_id: it.bookId, quantity: it.quantity }))
         : undefined;
+      const rawPts = parseInt(loyaltyPointsStr.trim(), 10);
       await checkoutFromCart(token, {
         full_name: fullName.trim() || undefined,
         note: note.trim() || undefined,
@@ -192,6 +207,8 @@ export function CheckoutScreen() {
         province: province.trim() || undefined,
         ward: ward.trim() || undefined,
         promotion_code: promo.trim() || undefined,
+        loyalty_points_to_redeem:
+          Number.isFinite(rawPts) && rawPts > 0 ? rawPts : undefined,
         items: itemsPayload,
       });
       navigation.navigate("Tabs");
@@ -308,6 +325,20 @@ export function CheckoutScreen() {
           </Button>
         </Section>
 
+        <Section title="Điểm tích lũy" icon="star-circle-outline" theme={theme}>
+          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 6 }}>
+            Bạn đang có <Text style={{ fontWeight: "800" }}>{userLoyalty}</Text> điểm. Mỗi điểm giảm 1đ (tối đa 50% giá trị sau voucher).
+          </Text>
+          <TextInput
+            mode="outlined"
+            label="Số điểm muốn dùng (tuỳ chọn)"
+            value={loyaltyPointsStr}
+            onChangeText={(t) => setLoyaltyPointsStr(t.replace(/[^\d]/g, ""))}
+            keyboardType="number-pad"
+            dense
+          />
+        </Section>
+
         {/* ── Summary ── */}
         <View
           style={{
@@ -329,6 +360,14 @@ export function CheckoutScreen() {
           {hasItems && <SummaryRow label="Vận chuyển" value={fmtPrice(shippingFeeDisplay)} theme={theme} />}
           {promoDiscountDisplay > 0 && (
             <SummaryRow label="Mã giảm giá" value={`-${fmtPrice(promoDiscountDisplay)}`} theme={theme} color={theme.colors.error} />
+          )}
+          {pointsDiscountDisplay > 0 && (
+            <SummaryRow
+              label="Giảm từ điểm (ước tính)"
+              value={`-${fmtPrice(pointsDiscountDisplay)}`}
+              theme={theme}
+              color={theme.colors.error}
+            />
           )}
           <Divider style={{ marginVertical: 4 }} />
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>

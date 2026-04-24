@@ -22,6 +22,7 @@ export type EligibilityResponse = {
   eligible: boolean;
   already_reviewed: boolean;
   last_delivered_at?: string | null;
+  reward_points_on_submit?: number;
 };
 
 export type BookAvgRateOut = {

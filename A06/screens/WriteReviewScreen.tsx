@@ -1,8 +1,8 @@
-import { useCallback, useState } from "react";
-import { Alert, Pressable, ScrollView, View } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { Alert, ScrollView, View } from "react-native";
+import { Image } from "expo-image";
 import {
   ActivityIndicator,
-  Appbar,
   Button,
   Surface,
   Text,
@@ -25,9 +25,12 @@ import {
   type EligibilityResponse,
   type Review,
 } from "../lib/reviews";
+import { ScreenHeader, StarRating } from "../components";
 
 type WriteRoute = RouteProp<RootStackParamList, "WriteReview">;
 type WriteNav = NativeStackNavigationProp<RootStackParamList, "WriteReview">;
+
+const RATE_LABELS = ["Chọn sao", "Tệ", "Không tốt", "Bình thường", "Tốt", "Tuyệt vời"];
 
 export function WriteReviewScreen() {
   const theme = useTheme();
@@ -95,9 +98,12 @@ export function WriteReviewScreen() {
           rate,
           content: content.trim() || null,
         });
+        const pts = elig?.reward_points_on_submit ?? 0;
         Alert.alert(
-          "Thành công",
-          "Đã gửi đánh giá. Bạn nhận điểm tích lũy (xem trong Hồ sơ → Điểm tích lũy).",
+          "Cảm ơn bạn!",
+          pts > 0
+            ? `Đánh giá đã được ghi nhận. Bạn nhận +${pts} điểm — xem tại «Hồ sơ → Điểm tích lũy».`
+            : "Đánh giá đã được ghi nhận.",
         );
       }
       nav.goBack();
@@ -131,13 +137,14 @@ export function WriteReviewScreen() {
     ]);
   };
 
+  const cover = book?.book_detail?.image_url;
+  const blocked = !!elig && !elig.eligible && !elig.already_reviewed;
+  const remaining = useMemo(() => 500 - content.length, [content]);
+
   if (!token) {
     return (
       <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <Appbar.Header>
-          <Appbar.BackAction onPress={() => nav.goBack()} />
-          <Appbar.Content title="Đánh giá sách" />
-        </Appbar.Header>
+        <ScreenHeader title="Đánh giá sách" />
         <View style={{ flex: 1, justifyContent: "center", padding: 24 }}>
           <Text variant="bodyLarge" style={{ textAlign: "center" }}>
             Vui lòng đăng nhập để đánh giá.
@@ -149,11 +156,8 @@ export function WriteReviewScreen() {
 
   if (loading && !book) {
     return (
-      <Surface style={{ flex: 1 }}>
-        <Appbar.Header>
-          <Appbar.BackAction onPress={() => nav.goBack()} />
-          <Appbar.Content title="Đánh giá sách" />
-        </Appbar.Header>
+      <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <ScreenHeader title="Đánh giá sách" />
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <ActivityIndicator />
         </View>
@@ -161,79 +165,170 @@ export function WriteReviewScreen() {
     );
   }
 
-  const title = book?.title ?? `Sách #${bookId}`;
-  const subtitle =
-    orderId != null ? `Đơn hàng #${orderId}` : undefined;
-  const blocked =
-    !elig?.eligible &&
-    !elig?.already_reviewed;
-
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <Appbar.Header elevated>
-        <Appbar.BackAction onPress={() => nav.goBack()} />
-        <Appbar.Content title="Đánh giá sách" titleStyle={{ fontWeight: "700" }} />
-      </Appbar.Header>
+      <ScreenHeader
+        title="Đánh giá sách"
+        subtitle={orderId != null ? `Đơn #${orderId}` : undefined}
+      />
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-        <Text variant="titleMedium" style={{ fontWeight: "700" }}>
-          {title}
-        </Text>
-        {subtitle ? (
-          <Text variant="bodySmall" style={{ opacity: 0.65, marginTop: 4 }}>
-            {subtitle}
-          </Text>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40, gap: 14 }}>
+        {/* ── Sản phẩm đang đánh giá ── */}
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 12,
+            backgroundColor: theme.colors.surface,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: theme.colors.outline,
+            padding: 12,
+          }}
+        >
+          <View
+            style={{
+              width: 60,
+              height: 84,
+              borderRadius: 8,
+              backgroundColor: theme.colors.surfaceVariant,
+              overflow: "hidden",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {cover ? (
+              <Image source={{ uri: cover }} style={{ width: 60, height: 84 }} contentFit="cover" />
+            ) : (
+              <MaterialCommunityIcons
+                name="book-open-page-variant"
+                size={28}
+                color={theme.colors.onSurfaceVariant}
+              />
+            )}
+          </View>
+          <View style={{ flex: 1, justifyContent: "center" }}>
+            <Text variant="titleSmall" style={{ fontWeight: "700" }} numberOfLines={2}>
+              {book?.title ?? `Sách #${bookId}`}
+            </Text>
+            {book?.author ? (
+              <Text
+                variant="bodySmall"
+                style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
+                numberOfLines={1}
+              >
+                {book.author}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+
+        {/* ── Reward callout ── */}
+        {!blocked && !existing ? (
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 10,
+              backgroundColor: "#FFF8E1",
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: "#F5D580",
+              padding: 12,
+            }}
+          >
+            <MaterialCommunityIcons name="gift-outline" size={22} color="#B25E00" />
+            <Text variant="bodySmall" style={{ flex: 1, color: "#7A4F00", lineHeight: 18 }}>
+              <Text style={{ fontWeight: "800" }}>
+                +{elig?.reward_points_on_submit ?? 0} điểm
+              </Text>
+              {" "}khi gửi đánh giá hợp lệ lần đầu. Dùng điểm để đổi voucher ở «Đổi điểm».
+            </Text>
+          </View>
         ) : null}
 
         {blocked ? (
           <View
             style={{
-              marginTop: 20,
-              padding: 14,
-              borderRadius: 12,
+              flexDirection: "row",
+              gap: 10,
               backgroundColor: theme.colors.surfaceVariant,
+              borderRadius: 12,
+              padding: 14,
             }}
           >
-            <Text variant="bodyMedium">
-              Bạn chưa đủ điều kiện đánh giá sách này (chưa mua/giao hoặc đã quá thời hạn sau khi
-              nhận hàng).
+            <MaterialCommunityIcons
+              name="information-outline"
+              size={22}
+              color={theme.colors.onSurfaceVariant}
+            />
+            <Text variant="bodySmall" style={{ flex: 1, color: theme.colors.onSurfaceVariant }}>
+              Bạn chưa đủ điều kiện đánh giá sách này (chưa mua/giao thành công hoặc đã quá thời hạn).
             </Text>
           </View>
         ) : (
           <>
-            <Text variant="titleSmall" style={{ fontWeight: "700", marginTop: 20, marginBottom: 8 }}>
-              Điểm sao (1–5)
-            </Text>
-            <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
-              {[1, 2, 3, 4, 5].map((n) => (
-                <Pressable key={n} onPress={() => setRate(n)}>
-                  <MaterialCommunityIcons
-                    name={n <= rate ? "star" : "star-outline"}
-                    size={40}
-                    color={n <= rate ? theme.colors.primary : theme.colors.outline}
-                  />
-                </Pressable>
-              ))}
+            {/* ── Rating ── */}
+            <View
+              style={{
+                backgroundColor: theme.colors.surface,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: theme.colors.outline,
+                padding: 16,
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                Chất lượng sản phẩm
+              </Text>
+              <StarRating value={rate} onChange={setRate} size={36} />
+              <Text
+                variant="titleSmall"
+                style={{
+                  color: rate > 0 ? theme.colors.primary : theme.colors.onSurfaceVariant,
+                  fontWeight: "700",
+                }}
+              >
+                {RATE_LABELS[rate] ?? "Chọn sao"}
+              </Text>
             </View>
 
-            <TextInput
-              label="Nội dung (không bắt buộc)"
-              value={content}
-              onChangeText={setContent}
-              mode="outlined"
-              multiline
-              numberOfLines={4}
-              style={{ marginTop: 16, minHeight: 120 }}
-            />
+            {/* ── Content ── */}
+            <View>
+              <TextInput
+                label="Chia sẻ cảm nhận của bạn (không bắt buộc)"
+                value={content}
+                onChangeText={(t) => t.length <= 500 && setContent(t)}
+                mode="outlined"
+                multiline
+                numberOfLines={5}
+                style={{ minHeight: 130, backgroundColor: theme.colors.surface }}
+                outlineColor={theme.colors.outline}
+                activeOutlineColor={theme.colors.primary}
+              />
+              <Text
+                variant="labelSmall"
+                style={{
+                  textAlign: "right",
+                  color: theme.colors.onSurfaceVariant,
+                  marginTop: 4,
+                }}
+              >
+                {remaining} ký tự còn lại
+              </Text>
+            </View>
 
             <Button
               mode="contained"
               onPress={handleSubmit}
               loading={saving}
               disabled={saving || !canSubmit}
-              style={{ marginTop: 20, borderRadius: 12 }}
+              style={{ borderRadius: 12 }}
+              contentStyle={{ paddingVertical: 6 }}
+              icon={existing ? "pencil" : "send"}
             >
-              {existing ? "Cập nhật đánh giá" : "Gửi đánh giá"}
+              {existing ? "Cập nhật đánh giá" : "Gửi đánh giá & nhận điểm"}
             </Button>
 
             {existing?.id ? (
@@ -243,7 +338,8 @@ export function WriteReviewScreen() {
                 onPress={handleDelete}
                 loading={deleting}
                 disabled={deleting}
-                style={{ marginTop: 12, borderRadius: 12 }}
+                style={{ borderRadius: 12, borderColor: theme.colors.error }}
+                icon="trash-can-outline"
               >
                 Xóa đánh giá
               </Button>
