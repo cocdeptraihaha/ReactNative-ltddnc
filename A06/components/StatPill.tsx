@@ -52,6 +52,3 @@ export function StatPill({ icon, label, tone = "neutral", style }: Props) {
     </View>
   );
 }
-
-// avoid unused import warn for theme in builds
-void useTheme;

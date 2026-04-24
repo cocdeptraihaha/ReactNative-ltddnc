@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Appbar,
   Divider,
+  MD3Theme,
   Surface,
   Text,
   useTheme,
@@ -60,7 +61,12 @@ export function ProfileScreen() {
 
   const onLogout = async () => {
     await logout();
-    navigation.reset({ index: 0, routes: [{ name: "Welcome" as any }] });
+    const rootNav = navigation.getParent();
+    if (rootNav) {
+      rootNav.reset({ index: 0, routes: [{ name: "Login" as never }] });
+      return;
+    }
+    navigation.reset({ index: 0, routes: [{ name: "Login" as never }] });
   };
 
   return (
@@ -202,6 +208,13 @@ export function ProfileScreen() {
             theme={theme}
           />
           <Divider />
+          <MenuItem
+            icon="package-variant-closed-remove"
+            label="Yêu cầu trả hàng"
+            onPress={() => navigation.navigate("ReturnRequests")}
+            theme={theme}
+          />
+          <Divider />
           {user.is_superuser && (
             <>
               <MenuItem
@@ -247,7 +260,7 @@ function MenuItem({
   icon: string;
   label: string;
   onPress: () => void;
-  theme: ReturnType<typeof useTheme>;
+  theme: MD3Theme;
 }) {
   return (
     <Pressable

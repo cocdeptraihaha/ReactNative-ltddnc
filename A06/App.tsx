@@ -18,7 +18,7 @@ function AppContent() {
       logout();
       navigationRef.reset({
         index: 0,
-        routes: [{ name: "Welcome" as never }],
+        routes: [{ name: "Login" as never }],
       });
     });
     return () => setOnUnauthorized(() => {});

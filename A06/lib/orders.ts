@@ -4,6 +4,7 @@ export type OrderItem = {
   id: number;
   book_id: number | null;
   book_title?: string | null;
+  image_url?: string | null;
   quantity: number;
   price: number;
 };

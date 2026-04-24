@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { View } from "react-native";
+import { ActivityIndicator, Text, useTheme } from "react-native-paper";
 import {
-  WelcomeScreen,
   LoginScreen,
   RegisterScreen,
   VerifyOtpScreen,
@@ -19,11 +20,12 @@ import {
   RewardsScreen,
   MyVouchersScreen,
   PersonalInfoScreen,
+  ReturnRequestsScreen,
 } from "../screens";
 import { BottomTabs } from "./BottomTabs";
+import { useAuth } from "../context/AuthContext";
 
 export type RootStackParamList = {
-  Welcome: undefined;
   Login: undefined;
   Register: undefined;
   Tabs: undefined;
@@ -48,17 +50,44 @@ export type RootStackParamList = {
   Rewards: undefined;
   MyVouchers: undefined;
   PersonalInfo: undefined;
+  ReturnRequests:
+    | {
+        orderId?: number;
+        orderItemId?: number;
+      }
+    | undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootStack() {
+  const { token, isReady } = useAuth();
+  const theme = useTheme();
+
+  if (!isReady) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: theme.colors.background,
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 10,
+        }}
+      >
+        <ActivityIndicator />
+        <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+          Đang khởi tạo...
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <Stack.Navigator
       screenOptions={{ headerShown: false }}
-      initialRouteName="Welcome"
+      initialRouteName={token ? "Tabs" : "Login"}
     >
-      <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="Tabs" component={BottomTabs} />
@@ -76,6 +105,7 @@ export function RootStack() {
       <Stack.Screen name="Rewards" component={RewardsScreen} />
       <Stack.Screen name="MyVouchers" component={MyVouchersScreen} />
       <Stack.Screen name="PersonalInfo" component={PersonalInfoScreen} />
+      <Stack.Screen name="ReturnRequests" component={ReturnRequestsScreen} />
       <Stack.Screen name="AdminOrders" component={AdminOrderManageScreen} />
       <Stack.Screen name="AdminAddBook" component={AdminAddBookScreen} />
     </Stack.Navigator>

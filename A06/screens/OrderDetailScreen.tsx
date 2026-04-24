@@ -151,6 +151,7 @@ export function OrderDetailScreen() {
   }
 
   const canCancel = !["CANCELLED", "COMPLETED", "DELIVERED", "RETURNED", "CANCEL_REQUESTED"].includes(statusKey);
+  const canCreateReturnRequest = statusKey === "DELIVERED" || statusKey === "COMPLETED";
 
   const history = [...(order.status_history ?? [])].sort(
     (a, b) =>
@@ -247,6 +248,21 @@ export function OrderDetailScreen() {
                     }
                   >
                     {e!.already_reviewed ? "Sửa đánh giá" : "Đánh giá"}
+                  </Button>
+                ) : null}
+                {canCreateReturnRequest ? (
+                  <Button
+                    mode="outlined"
+                    compact
+                    style={{ alignSelf: "flex-start", marginTop: 6 }}
+                    onPress={() =>
+                      nav.navigate("ReturnRequests", {
+                        orderId: order.id,
+                        orderItemId: oi.id,
+                      })
+                    }
+                  >
+                    Trả hàng
                   </Button>
                 ) : null}
               </View>

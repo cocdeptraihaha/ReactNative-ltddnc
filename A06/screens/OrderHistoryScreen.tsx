@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Pressable, ScrollView, View } from "react-native";
+import { Image } from "expo-image";
 import {
   ActivityIndicator,
   Divider,
@@ -102,11 +103,19 @@ function OrderItemRow({
           justifyContent: "center",
         }}
       >
-        <MaterialCommunityIcons
-          name="book-open-page-variant"
-          size={32}
-          color={theme.colors.onSurfaceVariant}
-        />
+        {item.image_url ? (
+          <Image
+            source={{ uri: item.image_url }}
+            style={{ width: 72, height: 72 }}
+            contentFit="cover"
+          />
+        ) : (
+          <MaterialCommunityIcons
+            name="book-open-page-variant"
+            size={32}
+            color={theme.colors.onSurfaceVariant}
+          />
+        )}
       </View>
       <View style={{ flex: 1, justifyContent: "space-between" }}>
         <View>

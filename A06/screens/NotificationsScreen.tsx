@@ -1,5 +1,5 @@
-import { useCallback, useState } from "react";
-import { FlatList, Pressable, RefreshControl, View } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { FlatList, Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { Appbar, MD3Theme, Surface, Text, useTheme } from "react-native-paper";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -23,20 +23,113 @@ type NotifMeta = {
   label: string;
 };
 
-function metaForType(t: string): NotifMeta {
-  switch (t) {
-    case "ORDER_STATUS":
-      return { icon: "truck-fast-outline", bg: "#E1F5FE", fg: "#0277BD", label: "Đơn hàng" };
+type NotifCategory =
+  | "ALL"
+  | "ORDER_NEW"
+  | "ORDER_CANCELLATION"
+  | "ORDER_SHIPPING"
+  | "ORDER_COMPLETION"
+  | "ORDER_OTHER"
+  | "RETURN_REQUEST"
+  | "PROMOTION"
+  | "CHAT"
+  | "SUPPORT"
+  | "REVIEW"
+  | "OTHER";
+
+const FILTERS: Array<{ key: NotifCategory; label: string }> = [
+  { key: "ALL", label: "Tất cả" },
+  { key: "ORDER_NEW", label: "Đơn mới" },
+  { key: "ORDER_CANCELLATION", label: "Hủy đơn" },
+  { key: "ORDER_SHIPPING", label: "Vận chuyển" },
+  { key: "ORDER_COMPLETION", label: "Hoàn thành" },
+  { key: "RETURN_REQUEST", label: "Trả hàng" },
+  { key: "PROMOTION", label: "Khuyến mãi" },
+  { key: "CHAT", label: "Tin nhắn" },
+  { key: "SUPPORT", label: "Hỗ trợ" },
+  { key: "REVIEW", label: "Đánh giá" },
+  { key: "OTHER", label: "Khác" },
+];
+
+function normalizeText(v: string) {
+  return v.toLowerCase();
+}
+
+function categorizeNotification(row: NotificationRow): NotifCategory {
+  const type = (row.type ?? "").toUpperCase();
+  const meta = row.meta ?? parseNotificationMeta(row.message ?? "");
+  const statusRaw =
+    String(meta.status ?? meta.status_code ?? meta.order_status ?? "").toUpperCase();
+  const text = normalizeText(`${row.title ?? ""}\n${row.message ?? ""}`);
+
+  if (type === "ORDER_NEW") return "ORDER_NEW";
+  if (type === "PROMOTION") return "PROMOTION";
+  if (type === "CHAT") return "CHAT";
+  if (type === "SUPPORT_NEW") return "SUPPORT";
+  if (type === "REVIEW_NEW") return "REVIEW";
+  if (type === "RETURN_REQUEST") return "RETURN_REQUEST";
+
+  if (type === "ORDER_STATUS") {
+    if (
+      statusRaw.includes("CANCEL") ||
+      text.includes("hủy") ||
+      text.includes("huỷ") ||
+      text.includes("cancel")
+    ) {
+      return "ORDER_CANCELLATION";
+    }
+    if (
+      statusRaw.includes("RETURN") ||
+      text.includes("trả hàng") ||
+      text.includes("hoàn hàng") ||
+      text.includes("return")
+    ) {
+      return "RETURN_REQUEST";
+    }
+    if (
+      statusRaw.includes("SHIPPED") ||
+      statusRaw.includes("DELIVERED") ||
+      text.includes("giao") ||
+      text.includes("vận chuyển") ||
+      text.includes("shipping")
+    ) {
+      return "ORDER_SHIPPING";
+    }
+    if (
+      statusRaw.includes("COMPLETED") ||
+      text.includes("hoàn thành") ||
+      text.includes("completed")
+    ) {
+      return "ORDER_COMPLETION";
+    }
+    return "ORDER_OTHER";
+  }
+
+  return "OTHER";
+}
+
+function metaForCategory(category: NotifCategory): NotifMeta {
+  switch (category) {
     case "ORDER_NEW":
       return { icon: "package-variant", bg: "#FFF3E0", fg: "#E65100", label: "Đơn mới" };
-    case "REVIEW_NEW":
-      return { icon: "star-outline", bg: "#FFFDE7", fg: "#B25E00", label: "Đánh giá" };
-    case "SUPPORT_NEW":
-      return { icon: "lifebuoy", bg: "#F3E5F5", fg: "#7B1FA2", label: "Hỗ trợ" };
+    case "ORDER_CANCELLATION":
+      return { icon: "close-circle-outline", bg: "#FEE2E2", fg: "#B42318", label: "Hủy đơn" };
+    case "ORDER_SHIPPING":
+      return { icon: "truck-fast-outline", bg: "#E1F5FE", fg: "#0277BD", label: "Vận chuyển" };
+    case "ORDER_COMPLETION":
+      return { icon: "check-decagram-outline", bg: "#E8F5E9", fg: "#1B7A3A", label: "Hoàn thành" };
+    case "ORDER_OTHER":
+      return { icon: "clipboard-text-outline", bg: "#EEF2FF", fg: "#3F51B5", label: "Đơn hàng" };
+    case "RETURN_REQUEST":
+      return { icon: "backup-restore", bg: "#FFF4E5", fg: "#B25E00", label: "Trả hàng" };
     case "PROMOTION":
       return { icon: "tag-outline", bg: "#E8F5E9", fg: "#1B7A3A", label: "Khuyến mãi" };
     case "CHAT":
       return { icon: "chat-outline", bg: "#E0F2F1", fg: "#00796B", label: "Tin nhắn" };
+    case "SUPPORT":
+      return { icon: "lifebuoy", bg: "#F3E5F5", fg: "#7B1FA2", label: "Hỗ trợ" };
+    case "REVIEW":
+      return { icon: "star-outline", bg: "#FFFDE7", fg: "#B25E00", label: "Đánh giá" };
     default:
       return { icon: "bell-outline", bg: "#F2F4F7", fg: "#475467", label: "Thông báo" };
   }
@@ -63,6 +156,7 @@ export function NotificationsScreen() {
   const { token, user } = useAuth();
   const { items, unreadCount, connected, refresh } = useNotifications();
   const [refreshing, setRefreshing] = useState(false);
+  const [filter, setFilter] = useState<NotifCategory>("ALL");
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -88,6 +182,23 @@ export function NotificationsScreen() {
       /* ignore */
     }
   };
+
+  const categorizedItems = useMemo(
+    () =>
+      items.map((item) => ({
+        item,
+        category: categorizeNotification(item),
+      })),
+    [items],
+  );
+
+  const visibleItems = useMemo(
+    () =>
+      categorizedItems
+        .filter((row) => filter === "ALL" || row.category === filter)
+        .map((row) => row.item),
+    [categorizedItems, filter],
+  );
 
   const openItem = async (row: NotificationRow) => {
     if (!token) return;
@@ -162,17 +273,6 @@ export function NotificationsScreen() {
           borderBottomColor: theme.colors.outline,
         }}
       >
-        <View
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: 4,
-            backgroundColor: connected ? "#1B7A3A" : "#F5A623",
-          }}
-        />
-        <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
-          {connected ? "Realtime đang hoạt động" : "Đang kết nối lại…"}
-        </Text>
         {unreadCount > 0 ? (
           <View
             style={{
@@ -190,21 +290,66 @@ export function NotificationsScreen() {
         ) : null}
       </View>
 
+      {token ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 8, gap: 8 }}
+          style={{
+            backgroundColor: theme.colors.surface,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.colors.outline,
+          }}
+        >
+          {FILTERS.map((f) => {
+            const selected = filter === f.key;
+            return (
+              <Pressable
+                key={f.key}
+                onPress={() => setFilter(f.key)}
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 999,
+                  borderWidth: 1,
+                  borderColor: selected ? theme.colors.primary : theme.colors.outline,
+                  backgroundColor: selected ? theme.colors.primaryContainer : theme.colors.surface,
+                }}
+              >
+                <Text
+                  variant="labelMedium"
+                  style={{
+                    fontWeight: "700",
+                    color: selected ? theme.colors.primary : theme.colors.onSurfaceVariant,
+                  }}
+                >
+                  {f.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      ) : null}
+
       {!token ? (
         <EmptyState
           icon="bell-off-outline"
           title="Đăng nhập để nhận thông báo"
           description="Cập nhật đơn hàng, đánh giá, khuyến mãi & tin nhắn theo thời gian thực."
         />
-      ) : items.length === 0 ? (
+      ) : visibleItems.length === 0 ? (
         <EmptyState
           icon="bell-outline"
-          title="Chưa có thông báo"
-          description="Hoạt động mới của bạn sẽ xuất hiện ở đây."
+          title={filter === "ALL" ? "Chưa có thông báo" : "Không có thông báo theo nhóm này"}
+          description={
+            filter === "ALL"
+              ? "Hoạt động mới của bạn sẽ xuất hiện ở đây."
+              : "Thử chọn nhóm khác để xem thêm thông báo."
+          }
         />
       ) : (
         <FlatList
-          data={items}
+          data={visibleItems}
           keyExtractor={(it) => String(it.id)}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} />
@@ -232,7 +377,8 @@ function NotificationItem({
   onPress: () => void;
   theme: MD3Theme;
 }) {
-  const meta = metaForType(row.type);
+  const category = categorizeNotification(row);
+  const meta = metaForCategory(category);
   const unread = !row.is_read;
   return (
     <Pressable
