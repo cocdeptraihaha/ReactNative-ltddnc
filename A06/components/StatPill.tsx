@@ -1,5 +1,5 @@
 import { View, type ViewStyle } from "react-native";
-import { Text, useTheme } from "react-native-paper";
+import { Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 type Props = {
@@ -25,7 +25,6 @@ const TONE_FG: Record<NonNullable<Props["tone"]>, string> = {
 };
 
 export function StatPill({ icon, label, tone = "neutral", style }: Props) {
-  const theme = useTheme();
   const bg = TONE_BG[tone];
   const fg = TONE_FG[tone];
   return (
