@@ -1,19 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { FlatList, RefreshControl, View } from "react-native";
-import {
-  ActivityIndicator,
-  Appbar,
-  Surface,
-  Text,
-  useTheme,
-} from "react-native-paper";
+import { ActivityIndicator, Surface, Text, useTheme } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/RootStack";
 import { useAuth } from "../context/AuthContext";
-import { listMyFavorites } from "../lib/favorites";
+import { listMyFavorites, removeFavorite } from "../lib/favorites";
 import type { Book } from "../lib/books";
-import { ProductCard } from "../components/ProductCard";
+import { ProductCard, ScreenHeader, EmptyState } from "../components";
 
 type Nav = NativeStackNavigationProp<RootStackParamList, "Favorites">;
 
@@ -25,49 +19,67 @@ export function FavoritesScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const fetchData = useCallback(async () => {
+    if (!token) return [] as Book[];
+    return listMyFavorites(token, { limit: 100 });
+  }, [token]);
+
   const load = useCallback(async () => {
-    if (!token) return;
     setLoading(true);
     try {
-      setBooks(await listMyFavorites(token, { limit: 100 }));
+      setBooks(await fetchData());
     } catch {
       setBooks([]);
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [fetchData]);
 
   useEffect(() => {
     load();
   }, [load]);
 
   const onRefresh = useCallback(async () => {
-    if (!token) return;
     setRefreshing(true);
     try {
-      setBooks(await listMyFavorites(token, { limit: 100 }));
+      setBooks(await fetchData());
     } finally {
       setRefreshing(false);
     }
-  }, [token]);
+  }, [fetchData]);
+
+  const onRemove = useCallback(
+    async (bookId: number) => {
+      if (!token) return;
+      setBooks((prev) => prev.filter((b) => b.id !== bookId));
+      try {
+        await removeFavorite(token, bookId);
+      } catch {
+        load();
+      }
+    },
+    [token, load],
+  );
 
   if (!token) {
     return (
-      <Surface style={{ flex: 1 }}>
-        <Appbar.Header>
-          <Appbar.BackAction onPress={() => navigation.goBack()} />
-          <Appbar.Content title="Yêu thích" />
-        </Appbar.Header>
+      <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <ScreenHeader title="Yêu thích" />
+        <EmptyState
+          icon="heart-off-outline"
+          title="Đăng nhập để xem yêu thích"
+          description="Lưu sách bạn quan tâm để theo dõi giảm giá và mua nhanh sau này."
+        />
       </Surface>
     );
   }
 
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <Appbar.Header elevated>
-        <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title="Sách yêu thích" titleStyle={{ fontWeight: "700" }} />
-      </Appbar.Header>
+      <ScreenHeader
+        title="Sách yêu thích"
+        subtitle={books.length > 0 ? `${books.length} sản phẩm đã lưu` : undefined}
+      />
       {loading ? (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <ActivityIndicator />
@@ -78,28 +90,54 @@ export function FavoritesScreen() {
           keyExtractor={(item) => String(item.id)}
           numColumns={2}
           columnWrapperStyle={{ gap: 10, paddingHorizontal: 16 }}
-          contentContainerStyle={{ paddingTop: 16, paddingBottom: 32, gap: 10 }}
+          contentContainerStyle={{
+            paddingTop: 12,
+            paddingBottom: 32,
+            gap: 10,
+            flexGrow: 1,
+          }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
           ListEmptyComponent={
-            <Text
-              variant="bodyMedium"
-              style={{ padding: 24, textAlign: "center", color: theme.colors.onSurfaceVariant }}
-            >
-              Chưa có sách yêu thích.
-            </Text>
+            <EmptyState
+              icon="heart-outline"
+              title="Chưa có sách yêu thích"
+              description="Nhấn biểu tượng tim trên trang chi tiết sách để lưu lại."
+              actionLabel="Khám phá sách"
+              onAction={() => navigation.navigate("Tabs" as any)}
+            />
           }
           renderItem={({ item }) => (
             <View style={{ flex: 1 }}>
               <ProductCard
                 book={item}
+                showFavorite
+                isFavorite
+                onFavoriteToggle={() => onRemove(item.id)}
                 onPress={() => navigation.navigate("BookDetail", { bookId: item.id })}
               />
             </View>
           )}
         />
       )}
+      {books.length > 0 ? (
+        <View
+          style={{
+            position: "absolute",
+            bottom: 12,
+            alignSelf: "center",
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            backgroundColor: theme.colors.onSurface + "CC",
+            borderRadius: 999,
+          }}
+        >
+          <Text variant="labelSmall" style={{ color: theme.colors.surface }}>
+            Vuốt xuống để làm mới
+          </Text>
+        </View>
+      ) : null}
     </Surface>
   );
 }

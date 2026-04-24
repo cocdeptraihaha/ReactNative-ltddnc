@@ -3,7 +3,6 @@ import { FlatList, ScrollView, View } from "react-native";
 import { Image } from "expo-image";
 import {
   ActivityIndicator,
-  Appbar,
   Button,
   Divider,
   Snackbar,
@@ -30,7 +29,13 @@ import {
 import { formatDateVN } from "../utils/date";
 import { useAuth } from "../context/AuthContext";
 import { addToCart } from "../lib/cart";
-import { ProductCard } from "../components/ProductCard";
+import {
+  ProductCard,
+  ScreenHeader,
+  SectionTitle,
+  StarRating,
+  StatPill,
+} from "../components";
 
 type BookDetailNav = NativeStackNavigationProp<RootStackParamList, "BookDetail">;
 type BookDetailRoute = RouteProp<RootStackParamList, "BookDetail">;
@@ -209,17 +214,12 @@ export function BookDetailScreen() {
 
   return (
     <Surface style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <Appbar.Header elevated>
-        <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title="Chi tiết sách" titleStyle={{ fontWeight: "700" }} />
-        {token ? (
-          <Appbar.Action
-            icon={isFavorite ? "heart" : "heart-outline"}
-            color={isFavorite ? theme.colors.error : undefined}
-            onPress={toggleFavorite}
-          />
-        ) : null}
-      </Appbar.Header>
+      <ScreenHeader
+        title="Chi tiết sách"
+        rightIcon={token ? (isFavorite ? "heart" : "heart-outline") : undefined}
+        rightLabel="Yêu thích"
+        onRight={toggleFavorite}
+      />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         {/* ── Cover image ── */}
@@ -255,27 +255,44 @@ export function BookDetailScreen() {
         <View style={{ padding: 16, gap: 16 }}>
           {/* ── Title + author ── */}
           <View>
-            <Text
-              variant="titleLarge"
-              style={{ fontWeight: "800", lineHeight: 28 }}
-            >
+            <Text variant="titleLarge" style={{ fontWeight: "800", lineHeight: 28 }}>
               {book.title ?? "Untitled"}
             </Text>
-            {book.author && (
+            {book.author ? (
               <Text
                 variant="bodyMedium"
-                style={{
-                  color: theme.colors.onSurfaceVariant,
-                  marginTop: 4,
-                }}
+                style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}
               >
                 {book.author}
               </Text>
-            )}
+            ) : null}
+
+            {/* rating mini line */}
+            {reviewAvg && (reviewAvg.avg_rate != null || reviewAvg.total_reviews > 0) ? (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 6,
+                  marginTop: 6,
+                }}
+              >
+                <StarRating value={reviewAvg.avg_rate ?? 0} size={14} />
+                <Text variant="labelMedium" style={{ fontWeight: "700" }}>
+                  {(reviewAvg.avg_rate ?? 0).toFixed(1)}
+                </Text>
+                <Text
+                  variant="labelSmall"
+                  style={{ color: theme.colors.onSurfaceVariant }}
+                >
+                  ({reviewAvg.total_reviews} đánh giá)
+                </Text>
+              </View>
+            ) : null}
           </View>
 
           {/* ── Price section ── */}
-          {finalPrice != null && (
+          {finalPrice != null ? (
             <View
               style={{
                 flexDirection: "row",
@@ -290,7 +307,7 @@ export function BookDetailScreen() {
               >
                 {finalPrice.toLocaleString("vi-VN")}đ
               </Text>
-              {book.has_discount && originalPrice != null && originalPrice > (finalPrice ?? 0) && (
+              {book.has_discount && originalPrice != null && originalPrice > (finalPrice ?? 0) ? (
                 <Text
                   variant="bodyMedium"
                   style={{
@@ -300,8 +317,9 @@ export function BookDetailScreen() {
                 >
                   {originalPrice.toLocaleString("vi-VN")}đ
                 </Text>
-              )}
-              {book.has_discount && (book.discount_percent != null || book.discount_amount != null) && (
+              ) : null}
+              {book.has_discount &&
+              (book.discount_percent != null || book.discount_amount != null) ? (
                 <View
                   style={{
                     backgroundColor: theme.colors.error,
@@ -316,83 +334,36 @@ export function BookDetailScreen() {
                       : `-${Math.round(book.discount_amount ?? 0).toLocaleString("vi-VN")}đ`}
                   </Text>
                 </View>
-              )}
+              ) : null}
             </View>
-          )}
+          ) : null}
 
-          {/* ── Stock ── */}
-          {book.stock_quantity != null && (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-              <MaterialCommunityIcons
-                name="package-variant"
-                size={16}
-                color={
-                  book.stock_quantity > 0
-                    ? theme.colors.primary
-                    : theme.colors.error
+          {/* ── Stats row ── */}
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+            {book.stock_quantity != null ? (
+              <StatPill
+                icon="package-variant"
+                tone={book.stock_quantity > 0 ? "success" : "danger"}
+                label={
+                  book.stock_quantity > 0 ? `Còn ${book.stock_quantity}` : "Hết hàng"
                 }
               />
-              <Text
-                variant="bodySmall"
-                style={{
-                  color:
-                    book.stock_quantity > 0
-                      ? theme.colors.onSurfaceVariant
-                      : theme.colors.error,
-                }}
-              >
-                {book.stock_quantity > 0
-                  ? `Còn ${book.stock_quantity} sản phẩm`
-                  : "Hết hàng"}
-              </Text>
-            </View>
-          )}
-
-          {/* ── Stats ── */}
-          <View
-            style={{
-              flexDirection: "row",
-              flexWrap: "wrap",
-              gap: 8,
-              alignItems: "center",
-            }}
-          >
-            <View
-              style={{
-                paddingHorizontal: 10,
-                paddingVertical: 6,
-                borderRadius: 20,
-                backgroundColor: theme.colors.secondaryContainer,
-              }}
-            >
-              <Text variant="labelSmall" style={{ color: theme.colors.onSecondaryContainer }}>
-                {book.buyer_count ?? 0} khách đã mua
-              </Text>
-            </View>
-            <View
-              style={{
-                paddingHorizontal: 10,
-                paddingVertical: 6,
-                borderRadius: 20,
-                backgroundColor: theme.colors.secondaryContainer,
-              }}
-            >
-              <Text variant="labelSmall" style={{ color: theme.colors.onSecondaryContainer }}>
-                {book.review_count ?? 0} bình luận
-              </Text>
-            </View>
-            <View
-              style={{
-                paddingHorizontal: 10,
-                paddingVertical: 6,
-                borderRadius: 20,
-                backgroundColor: theme.colors.secondaryContainer,
-              }}
-            >
-              <Text variant="labelSmall" style={{ color: theme.colors.onSecondaryContainer }}>
-                {book.view_count ?? 0} lượt xem
-              </Text>
-            </View>
+            ) : null}
+            <StatPill
+              icon="cart-check"
+              tone="primary"
+              label={`${book.buyer_count ?? 0} đã mua`}
+            />
+            <StatPill
+              icon="comment-text-outline"
+              tone="neutral"
+              label={`${book.review_count ?? 0} bình luận`}
+            />
+            <StatPill
+              icon="eye-outline"
+              tone="neutral"
+              label={`${book.view_count ?? 0} lượt xem`}
+            />
           </View>
 
           <Divider />
@@ -400,7 +371,7 @@ export function BookDetailScreen() {
           {/* ── Similar ── */}
           {similarBooks.length > 0 ? (
             <View>
-              <SectionLabel text="Sản phẩm tương tự" />
+              <SectionTitle icon="book-multiple-outline" title="Sản phẩm tương tự" />
               <FlatList
                 data={similarBooks}
                 horizontal
@@ -420,9 +391,9 @@ export function BookDetailScreen() {
           ) : null}
 
           {/* ── Description ── */}
-          {d?.description && (
+          {d?.description ? (
             <View>
-              <SectionLabel text="Mô tả" />
+              <SectionTitle icon="text-box-outline" title="Mô tả" />
               <Text
                 variant="bodyMedium"
                 style={{ color: theme.colors.onSurface, lineHeight: 22 }}
@@ -430,49 +401,90 @@ export function BookDetailScreen() {
                 {d.description}
               </Text>
             </View>
-          )}
+          ) : null}
 
           {/* ── Reviews ── */}
           <View>
-            <SectionLabel text="Đánh giá từ độc giả" />
+            <SectionTitle icon="star-outline" title="Đánh giá từ độc giả" />
             <View
               style={{
                 backgroundColor: theme.colors.surface,
                 borderRadius: 12,
                 padding: 14,
                 borderWidth: 1,
-                borderColor: theme.colors.outlineVariant,
+                borderColor: theme.colors.outline,
               }}
             >
               {reviewAvg && (reviewAvg.avg_rate != null || reviewAvg.total_reviews > 0) ? (
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                  <StarRow theme={theme} value={reviewAvg.avg_rate ?? 0} />
-                  <Text variant="titleMedium" style={{ fontWeight: "700" }}>
-                    {reviewAvg.avg_rate != null
-                      ? reviewAvg.avg_rate.toFixed(1)
-                      : "—"}
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                  <Text variant="displaySmall" style={{ fontWeight: "800" }}>
+                    {(reviewAvg.avg_rate ?? 0).toFixed(1)}
                   </Text>
-                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                    ({reviewAvg.total_reviews} đánh giá)
-                  </Text>
+                  <View style={{ gap: 4 }}>
+                    <StarRating value={reviewAvg.avg_rate ?? 0} size={18} />
+                    <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                      Dựa trên {reviewAvg.total_reviews} đánh giá
+                    </Text>
+                  </View>
                 </View>
               ) : (
-                <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                  Chưa có đánh giá.
-                </Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <MaterialCommunityIcons
+                    name="star-off-outline"
+                    size={20}
+                    color={theme.colors.onSurfaceVariant}
+                  />
+                  <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                    Chưa có đánh giá nào.
+                  </Text>
+                </View>
               )}
+
               {reviewList.length > 0 ? (
-                <View style={{ marginTop: 8, gap: 12 }}>
+                <View style={{ marginTop: 12, gap: 12 }}>
                   {reviewList.map((rv) => (
-                    <View key={rv.id}>
+                    <View
+                      key={rv.id}
+                      style={{
+                        paddingTop: 10,
+                        borderTopWidth: 1,
+                        borderTopColor: theme.colors.outline,
+                      }}
+                    >
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                        <Text variant="labelLarge" style={{ fontWeight: "700" }}>
+                        <View
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: 14,
+                            backgroundColor: theme.colors.primary + "1A",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Text
+                            variant="labelSmall"
+                            style={{ color: theme.colors.primary, fontWeight: "800" }}
+                          >
+                            {(rv.user?.full_name || rv.user?.username || "U")
+                              .charAt(0)
+                              .toUpperCase()}
+                          </Text>
+                        </View>
+                        <Text
+                          variant="labelLarge"
+                          style={{ fontWeight: "700", flex: 1 }}
+                          numberOfLines={1}
+                        >
                           {rv.user?.full_name || rv.user?.username || "Độc giả"}
                         </Text>
-                        <StarRow theme={theme} value={rv.rate ?? 0} max={5} size={16} />
+                        <StarRating value={rv.rate ?? 0} size={14} />
                       </View>
                       {rv.content ? (
-                        <Text variant="bodySmall" style={{ marginTop: 4, opacity: 0.85 }}>
+                        <Text
+                          variant="bodySmall"
+                          style={{ marginTop: 6, color: theme.colors.onSurface, lineHeight: 18 }}
+                        >
                           {rv.content}
                         </Text>
                       ) : null}
@@ -480,17 +492,22 @@ export function BookDetailScreen() {
                   ))}
                 </View>
               ) : null}
+
               {token && reviewElig && (reviewElig.eligible || reviewElig.already_reviewed) ? (
                 <Button
                   mode="contained"
-                  style={{ marginTop: 16, borderRadius: 12 }}
+                  icon={reviewElig.already_reviewed ? "pencil" : "star-plus-outline"}
+                  style={{ marginTop: 14, borderRadius: 10 }}
                   onPress={() => navigation.navigate("WriteReview", { bookId })}
                 >
-                  {reviewElig.already_reviewed ? "Sửa đánh giá" : "Đánh giá"}
+                  {reviewElig.already_reviewed ? "Sửa đánh giá" : "Viết đánh giá"}
                 </Button>
               ) : null}
               {!token ? (
-                <Text variant="bodySmall" style={{ marginTop: 12, color: theme.colors.onSurfaceVariant }}>
+                <Text
+                  variant="bodySmall"
+                  style={{ marginTop: 12, color: theme.colors.onSurfaceVariant }}
+                >
                   Đăng nhập để đánh giá sách này.
                 </Text>
               ) : null}
@@ -499,14 +516,14 @@ export function BookDetailScreen() {
 
           {/* ── Details grid ── */}
           <View>
-            <SectionLabel text="Thông tin chi tiết" />
+            <SectionTitle icon="information-outline" title="Thông tin chi tiết" />
             <View
               style={{
                 backgroundColor: theme.colors.surface,
                 borderRadius: 12,
                 overflow: "hidden",
                 borderWidth: 1,
-                borderColor: theme.colors.outlineVariant,
+                borderColor: theme.colors.outline,
               }}
             >
               <DetailRow label="Mã sách" value={book.code} theme={theme} />
@@ -520,7 +537,7 @@ export function BookDetailScreen() {
                 }
                 theme={theme}
               />
-              {d && (
+              {d ? (
                 <>
                   <DetailRow label="Số trang" value={d.pages} theme={theme} />
                   <DetailRow label="NXB" value={d.publisher} theme={theme} />
@@ -541,7 +558,7 @@ export function BookDetailScreen() {
                     last
                   />
                 </>
-              )}
+              ) : null}
             </View>
           </View>
         </View>
@@ -555,7 +572,7 @@ export function BookDetailScreen() {
           paddingHorizontal: 16,
           paddingVertical: 12,
           borderTopWidth: 1,
-          borderTopColor: theme.colors.surfaceVariant,
+          borderTopColor: theme.colors.outline,
           backgroundColor: theme.colors.surface,
         }}
       >
@@ -563,7 +580,7 @@ export function BookDetailScreen() {
           mode="outlined"
           onPress={handleAddToCart}
           icon="cart-plus"
-          style={{ flex: 1, borderRadius: 12 }}
+          style={{ flex: 1, borderRadius: 12, borderColor: theme.colors.primary }}
           contentStyle={{ paddingVertical: 4 }}
         >
           Thêm vào giỏ
@@ -591,43 +608,6 @@ export function BookDetailScreen() {
   );
 }
 
-function StarRow({
-  theme,
-  value,
-  max = 5,
-  size = 22,
-}: {
-  theme: ReturnType<typeof useTheme>;
-  value: number;
-  max?: number;
-  size?: number;
-}) {
-  const filled = Math.round(value);
-  return (
-    <View style={{ flexDirection: "row" }}>
-      {Array.from({ length: max }, (_, i) => (
-        <MaterialCommunityIcons
-          key={i}
-          name={i < filled ? "star" : "star-outline"}
-          size={size}
-          color={i < filled ? theme.colors.primary : theme.colors.outline}
-        />
-      ))}
-    </View>
-  );
-}
-
-function SectionLabel({ text }: { text: string }) {
-  return (
-    <Text
-      variant="titleSmall"
-      style={{ fontWeight: "700", marginBottom: 8 }}
-    >
-      {text}
-    </Text>
-  );
-}
-
 function DetailRow({
   label,
   value,
@@ -648,7 +628,7 @@ function DetailRow({
         paddingHorizontal: 14,
         paddingVertical: 10,
         borderBottomWidth: last ? 0 : 1,
-        borderBottomColor: theme.colors.outlineVariant,
+        borderBottomColor: theme.colors.outline,
       }}
     >
       <Text
