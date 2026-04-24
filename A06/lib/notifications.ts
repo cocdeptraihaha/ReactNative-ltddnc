@@ -18,12 +18,15 @@ export type UserNotificationDto = {
 
 export type WsNewNotification = {
   type: "new_notification";
+  schema_version?: number;
   id: number;
   title: string;
   message: string;
   notif_type: string;
   send_date: string | null;
   unread_count: number;
+  /** Meta parsed server-side (order_id, book_id, …). */
+  meta?: Record<string, string | number>;
 };
 
 export type WsUnreadSync = {

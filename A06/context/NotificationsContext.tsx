@@ -24,6 +24,7 @@ export type NotificationRow = {
   type: string;
   send_date: string | null;
   is_read: boolean;
+  meta?: Record<string, string | number>;
 };
 
 type Ctx = {
@@ -175,6 +176,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
             type: parsed.notif_type,
             send_date: parsed.send_date,
             is_read: false,
+            meta: parsed.meta,
           };
           prependFromWs(row, parsed.unread_count);
         }
